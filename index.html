@@ -29,7 +29,7 @@
 
     /* ================= HERO DATA ================= */
     const HEROES = [
-      "Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Bloodhunter",
+      "Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Blood Hunter",
       "Bombardier","Bubbles","Chronos","Corrupted Disciple","Defiler","Demented Shaman","Devourer",
       "Dr. Repulsor","Drunken Master","Electrician","Ellonia","Empath","Fayde","Flint Beastwood",
       "Flux","Forsaken Archer","Gauntlet","Gemini","Geomancer","Glacius","Grinex","Gunblade",
@@ -47,7 +47,7 @@
     const MATCHUPS_BASE = {
       // User-provided updates
       "Blacksmith": { synergy: ["Swiftblade", "Moon Queen", "Forsaken Archer"], advantage: [], disadvantage: [] },
-      "Bloodhunter": { synergy: [], advantage: ["Thunderbringer", "Wretched Hag"], disadvantage: [] },
+      "Blood Hunter": { synergy: [], advantage: ["Thunderbringer", "Wretched Hag"], disadvantage: [] },
       "Arachna": { synergy: ["Slither"], advantage: ["Pyromancer", "Thunderbringer", "Flint Beastwood", "Soulstealer"], disadvantage: ["Magebane"] },
       "Pestilence": { synergy: ["Voodoo Jester"], advantage: ["The Madman", "Grinex", "Scout", "Night Hound", "Predator"], disadvantage: ["Puppet Master"] },
       "Hellbringer": { synergy: ["Voodoo Jester", "Slither", "Magmus"], advantage: [], disadvantage: [] },
@@ -73,7 +73,7 @@
       "Bubbles": {
         synergy: ["Magmus","Behemoth","Plague Rider"],
         advantage: ["Pandamonium","Voodoo Jester","Monarch","Hammerstorm","Rampage","Myrmidon","Flint Beastwood","Andromeda","Pyromancer"],
-        disadvantage: ["Bloodhunter","Gunblade","Predator","Night Hound"]
+        disadvantage: ["Blood Hunter","Gunblade","Predator","Night Hound"]
       },
       "Empath": { synergy: ["Predator","Nomad"], advantage: [], disadvantage: [] },
       "Rampage": { synergy: [], advantage: ["Predator"], disadvantage: [] },
@@ -178,7 +178,7 @@
       "Gemini": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/e8/Gemini.jpg/revision/latest?cb=20130307034613",
       "Flint Beastwood": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/6e/Flint_Beastwood.jpg/revision/latest?cb=20130307034504",
       "Chronos": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/ba/Chronos.jpg/revision/latest?cb=20180112204658",
-      "Bloodhunter": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/37/Blood_Hunter.jpg/revision/latest?cb=20130307033115",
+      "Blood Hunter": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/37/Blood_Hunter.jpg/revision/latest?cb=20130307033115",
       "Arachna": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/4d/Arachna.jpg/revision/latest?cb=20130306185841",
       "Forsaken Archer": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/fc/Forsaken_Archer.jpg/revision/latest?cb=20151021024504",
       "Grinex": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/31/Grinex.jpg/revision/latest?cb=20130307034755"
@@ -366,7 +366,7 @@
         // Additional sanity tests
         const M = MATCHUPS;
         t("Blacksmith partners include Swiftblade", M["Blacksmith"].synergy.includes("Swiftblade"));
-        t("Bloodhunter strong vs Wretched Hag", M["Bloodhunter"].advantage.includes("Wretched Hag"));
+        t("Blood Hunter strong vs Wretched Hag", M["Blood Hunter"].advantage.includes("Wretched Hag"));
         t("Arachna strong vs Thunderbringer", M["Arachna"].advantage.includes("Thunderbringer"));
         t("Pestilence strong vs The Madman & Grinex", M["Pestilence"].advantage.includes("The Madman") && M["Pestilence"].advantage.includes("Grinex"));
         t("Hellbringer partners include Magmus", M["Hellbringer"].synergy.includes("Magmus"));
