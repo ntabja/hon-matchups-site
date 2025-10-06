@@ -170,42 +170,48 @@
 
     /* ================= UI COMPONENTS ================= */
     function Avatar({ name, size = 24 }) {
-      const [extIndex, setExtIndex] = useState(0);
-      const hasDirect = !!HERO_IMAGES[name];
-      const url = hasDirect
-        ? HERO_IMAGES[name]
-        : `${IMAGE_BASE}/${name.replace(/\s+/g, "_")}.${IMAGE_EXTS[extIndex]}`;
-      const initials = name.split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase();
-      const dim = `${size}px`;
+  const [i, setI] = React.useState(0);
 
-      function onErr() {
-        if (hasDirect) {
-          // Si la imagen externa falla, muestro iniciales (no cambio a rutas locales inexistentes)
-          setExtIndex(IMAGE_EXTS.length);
-        } else {
-          // Solo ciclar extensiones cuando usamos assets locales
-          setExtIndex(i => i + 1);
-        }
-      }
+  const base = "./assets/hon";
+  const fileStem = name.replace(/\s+/g, "_");
+  const candidates = [
+    `${base}/${fileStem}.webp`,
+    `${base}/${fileStem}.png`,
+    `${base}/${fileStem}.jpg`,
+    HERO_IMAGES[name] || null, // externa (Wikia) como último intento
+  ].filter(Boolean);
 
-      return (
-        <div style={{width:dim,height:dim}} className="inline-flex items-center justify-center rounded-lg bg-slate-700 text-slate-100 overflow-hidden">
-          {extIndex < IMAGE_EXTS.length ? (
-            <img
-              src={url}
-              alt={name}
-              decoding="async"
-              referrerPolicy="no-referrer"
-              crossOrigin="anonymous"
-              onError={onErr}
-              style={{width:"100%",height:"100%",objectFit:"cover"}}
-            />
-          ) : (
-            <span style={{fontSize: size>32?14:12}} className="font-semibold">{initials}</span>
-          )}
-        </div>
-      );
-    }
+  const dim = `${size}px`;
+  const initials = name.split(" ").map(p => p[0]).join("").slice(0,2).toUpperCase();
+
+  function onErr() {
+    setI(idx => idx + 1);
+  }
+
+  const hasImg = i < candidates.length;
+  const src = candidates[i];
+
+  return (
+    <div
+      style={{ width: dim, height: dim }}
+      className="inline-flex items-center justify-center rounded-lg bg-slate-700 text-slate-100 overflow-hidden"
+    >
+      {hasImg ? (
+        <img
+          src={src}
+          alt={name}
+          decoding="async"
+          onError={onErr}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      ) : (
+        <span style={{ fontSize: size > 32 ? 14 : 12 }} className="font-semibold">
+          {initials}
+        </span>
+      )}
+    </div>
+  );
+}
 
     /* ================= UI: App ================= */
     function App(){
