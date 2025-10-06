@@ -31,9 +31,9 @@
     const HEROES = [
       "Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Blood Hunter",
       "Bombardier","Bubbles","Chronos","Corrupted Disciple","Defiler","Demented Shaman","Devourer",
-      "Dr. Repulsor","Drunken Master","Electrician","Ellonia","Empath","Fayde","Flint Beastwood",
+      "Doctor Repulsor","Drunken Master","Electrician","Ellonia","Empath","Fayde","Flint Beastwood",
       "Flux","Forsaken Archer","Gauntlet","Gemini","Geomancer","Glacius","Grinex","Gunblade",
-      "Hammerstorm","Hellbringer","Jereziah","Keeper of the Forest","King Klout","Kraken","Legionnaire",
+      "Hammerstorm","Hellbringer","Jeraziah","Keeper of the Forest","King Klout","Kraken","Legionnaire",
       "Lodestone","Magmus","Magebane","Maliken","Martyr","Midas","Monarch","Monkey King","Moon Queen",
       "Moraxus","Myrmidon","Night Hound","Nomad","Nymphora","Ophelia","Pandamonium","Pebbles",
       "Pestilence","Pharaoh","Plague Rider","Pollywog Priest","Predator","Prophet","Puppet Master",
@@ -51,19 +51,19 @@
       "Arachna": { synergy: ["Slither"], advantage: ["Pyromancer", "Thunderbringer", "Flint Beastwood", "Soulstealer"], disadvantage: ["Magebane"] },
       "Pestilence": { synergy: ["Voodoo Jester"], advantage: ["The Madman", "Grinex", "Scout", "Night Hound", "Predator"], disadvantage: ["Puppet Master"] },
       "Hellbringer": { synergy: ["Voodoo Jester", "Slither", "Magmus"], advantage: [], disadvantage: [] },
-      "Magmus": { synergy: ["Myrmidon", "Witch Slayer", "Pollywog Priest", "Jereziah", "Nymphora"], advantage: [], disadvantage: [] },
-      "Voodoo Jester": { synergy: ["Swiftblade","Gemini","Gauntlet"], advantage: [], disadvantage: ["Dr. Repulsor"] },
+      "Magmus": { synergy: ["Myrmidon", "Witch Slayer", "Pollywog Priest", "Jeraziah", "Nymphora"], advantage: [], disadvantage: [] },
+      "Voodoo Jester": { synergy: ["Swiftblade","Gemini","Gauntlet"], advantage: [], disadvantage: ["Doctor Repulsor"] },
       "Witch Slayer": {
         synergy: ["Amun-Ra","Magmus","Pandamonium"],
         advantage: ["Armadon","Amun-Ra"],
-        disadvantage: ["Swiftblade","Predator","Jereziah","Moraxus","Pebbles","Gunblade"]
+        disadvantage: ["Swiftblade","Predator","Jeraziah","Moraxus","Pebbles","Gunblade"]
       },
 
       // Pre-existing sample data
       "Slither": {
         synergy: ["Demented Shaman","Amun-Ra","Swiftblade","Vindicator","Arachna"],
         advantage: ["Armadon"],
-        disadvantage: ["The Chipper","Arachna","Predator","Swiftblade","Jereziah","Accursed","Pebbles"]
+        disadvantage: ["The Chipper","Arachna","Predator","Swiftblade","Jeraziah","Accursed","Pebbles"]
       },
       "Pandamonium": {
         synergy: ["Witch Slayer","Voodoo Jester","Monarch"],
@@ -87,7 +87,7 @@
       "Moraxus": { synergy: [], advantage: ["Pollywog Priest"], disadvantage: [] },
       "Vindicator": { synergy: [], advantage: ["Tempest"], disadvantage: [] },
       "The Chipper": { synergy: [], advantage: ["Thunderbringer","Pyromancer"], disadvantage: [] },
-      "Bombardier": { synergy: [], advantage: [], disadvantage: ["Arachna","The Chipper","Accursed","Jereziah"] },
+      "Bombardier": { synergy: [], advantage: [], disadvantage: ["Arachna","The Chipper","Accursed","Jeraziah"] },
       "Flux": { synergy: ["Behemoth","Tempest","Soulstealer","Geomancer","Kraken","Solstice","Legionnaire","Hellbringer"], advantage: [], disadvantage: [] },
       "Hammerstorm": { synergy: ["Rhapsody","Glacius","Monarch"], advantage: [], disadvantage: [] },
 
@@ -134,7 +134,7 @@
       "Solstice": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/ea/Solstice.jpg/revision/latest?cb=20130307042115",
       "Pebbles": "https://static.wikia.nocookie.net/hon_gamepedia/images/0/04/Pebbles.jpg/revision/latest?cb=20130307041017",
       "Rampage": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/f4/Rampage.jpg/revision/latest?cb=20130307041303",
-      "Jereziah": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c6/Jeraziah.jpg/revision/latest?cb=20130307034928",
+      "Jeraziah": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c6/Jeraziah.jpg/revision/latest?cb=20130307034928",
       "The Gladiator": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/cb/The_Gladiator.jpg/revision/latest?cb=20130307042300",
       "Flux": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b1/Flux.jpg/revision/latest?cb=20130307034520",
       "Drunken Master": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b3/Drunken_Master.jpg/revision/latest?cb=20130307034242",
@@ -170,7 +170,7 @@
       "Plague Rider": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d5/Plague_Rider.jpg/revision/latest?cb=20130307041100",
       "Myrmidon": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/40/Myrmidon.jpg/revision/latest?cb=20130307035729",
       "Glacius": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b8/Glacius.jpg/revision/latest?cb=20130307034650",
-      "Dr. Repulsor": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/ce/Doctor_Repulsor.jpg/revision/latest?cb=20130729010055",
+      "Doctor Repulsor": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/ce/Doctor_Repulsor.jpg/revision/latest?cb=20130729010055",
       "Defiler": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/1c/Defiler.jpg/revision/latest?cb=20130307034036",
       "Soulstealer": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a6/Soulstealer.jpg/revision/latest?cb=20130308050019",
       "The Madman": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/ed/The_Madman.jpg/revision/latest?cb=20130307042317",
@@ -371,7 +371,7 @@
         t("Pestilence strong vs The Madman & Grinex", M["Pestilence"].advantage.includes("The Madman") && M["Pestilence"].advantage.includes("Grinex"));
         t("Hellbringer partners include Magmus", M["Hellbringer"].synergy.includes("Magmus"));
         t("Magmus partners include Witch Slayer", M["Magmus"].synergy.includes("Witch Slayer"));
-        t("Voodoo Jester weak vs Dr. Repulsor", M["Voodoo Jester"].disadvantage.includes("Dr. Repulsor"));
+        t("Voodoo Jester weak vs Doctor Repulsor", M["Voodoo Jester"].disadvantage.includes("Doctor Repulsor"));
 
         // Mirror expectations
         t("Mirror check: Thunderbringer weak vs Arachna", M["Thunderbringer"].disadvantage.includes("Arachna"));
