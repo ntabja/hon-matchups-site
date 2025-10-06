@@ -17,6 +17,23 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo, useRef, useLayoutEffect } = React;
 
+    // ===== Base path robusto para GitHub Pages =====
+    // - User/Org page (usuario.github.io): basePath = "" (raíz)
+    // - Project page (usuario.github.io/REPO): basePath = "/REPO"
+    const computeBasePath = () => {
+      // Si la ruta es "/REPO/" o "/REPO/index.html", quedarnos con "/REPO"
+      let p = window.location.pathname.replace(/\/index\.html$/, "");
+      // quitar slash final excepto si es "/"
+      if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
+      return p;
+    };
+    const BASE = computeBasePath();
+    const assetUrl = (rel) => `${BASE}/assets/${rel}`;     // p.ej. assetUrl("logo_reborn.png")
+    const heroAsset = (file) => assetUrl(`hon/${file}`);   // p.ej. heroAsset("Arachna.webp")
+
+    /** v27s — Stable (solo imágenes locales) */
+
+    /* ================= HERO DATA ================= */
     const HEROES = [
       "Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Blood Hunter",
       "Bombardier","Bubbles","Chronos","Corrupted Disciple","Defiler","Demented Shaman","Devourer",
@@ -32,6 +49,7 @@
       "Witch Slayer","Wretched Hag","Zephyr"
     ].sort();
 
+    /* ================= MATCHUPS (BASE, one-way) ================= */
     const MATCHUPS_BASE = {
       "Blacksmith": { synergy: ["Swiftblade", "Moon Queen", "Forsaken Archer"], advantage: [], disadvantage: [] },
       "Blood Hunter": { synergy: [], advantage: ["Thunderbringer", "Wretched Hag"], disadvantage: [] },
@@ -78,7 +96,7 @@
       "Ophelia": { synergy: [], advantage: [], disadvantage: ["Glacius","Voodoo Jester","Behemoth"] }
     };
 
-    const IMAGE_BASE = "./assets/hon";
+    const IMAGE_BASE = "hon"; // subcarpeta dentro de /assets
 
     function deriveMatchups(base) {
       const all = new Set(HEROES);
@@ -109,12 +127,11 @@
 
     function Avatar({ name, size = 24 }) {
       const [i, setI] = useState(0);
-      const localURL = (f) => new URL(`${IMAGE_BASE}/${f}`, window.location.href).href;
       const file = name.replace(/\s+/g, "_");
       const candidates = [
-        localURL(`${file}.webp`),
-        localURL(`${file}.png`),
-        localURL(`${file}.jpg`)
+        heroAsset(`${file}.webp`),
+        heroAsset(`${file}.png`),
+        heroAsset(`${file}.jpg`)
       ];
       const src = i < candidates.length ? candidates[i] : null;
       const dim = `${size}px`;
@@ -153,7 +170,7 @@
         return()=>window.removeEventListener("mousedown",outside);
       },[]);
 
-      const choose=h=>{ setSelected(h); setQuery(h); setOpen(false); window.scrollTo({top:0,behavior:"smooth"}); };
+      const choose=h=>{ setSelected(h); setQuery(h); setOpen(false); try{window.scrollTo({top:0,behavior:"smooth"})}catch{} };
       const data=selected?MATCHUPS[selected]:null;
 
       const ResultItem=({hero})=>(
@@ -167,7 +184,8 @@
         <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6">
           <div className="w-full max-w-3xl">
             <header className="mb-6 text-center">
-              <img src="./assets/logo_reborn.png" alt="HoN Reborn Logo" className="mx-auto mb-3 h-16 w-auto" decoding="async" />
+              <!-- Logo con basePath dinámico -->
+              <img src={assetUrl("logo_reborn.png")} alt="HoN Reborn Logo" className="mx-auto mb-3 h-16 w-auto" decoding="async" />
               <h1 className="text-3xl font-bold">HoN Matchups</h1>
               <p className="text-slate-400">Hero synergy and matchup finder</p>
             </header>
