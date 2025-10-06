@@ -152,11 +152,25 @@
         return [...list].sort();
       },[query]);
 
+      // ✅ pointerdown listener compatible con móviles
+      useEffect(() => {
+        function onOutside(e) {
+          if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
+        }
+        window.addEventListener("pointerdown", onOutside);
+        return () => window.removeEventListener("pointerdown", onOutside);
+      }, []);
+
       const choose=h=>{ setSelected(h); setQuery(h); setOpen(false); window.scrollTo({top:0,behavior:"smooth"}); };
       const data=selected?MATCHUPS[selected]:null;
 
       const ResultItem=({hero})=>(
-        <button onClick={()=>choose(hero)} className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 transition">
+        <button
+          type="button"
+          onPointerDown={(e)=>{ e.preventDefault(); choose(hero); }}
+          onMouseEnter={()=>setHighlight(hero)}
+          className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 transition"
+        >
           <Avatar name={hero} />
           <span className="underline decoration-transparent group-hover:decoration-slate-300">{hero}</span>
         </button>
@@ -181,10 +195,15 @@
               {open && (
                 <ul className="absolute z-10 mt-2 max-h-72 w-96 left-1/2 -translate-x-1/2 overflow-auto rounded-2xl border border-slate-700 bg-slate-800 p-1 shadow-xl">
                   {filtered.map((hero,idx)=>(
-                    <li key={hero} onClick={()=>choose(hero)} onMouseEnter={()=>setHighlight(idx)}
-                      className={`cursor-pointer rounded-xl px-3 py-2 flex items-center gap-2 ${idx===highlight?"bg-slate-700":""}`}>
-                      <Avatar name={hero} />
-                      <span>{hero}</span>
+                    <li key={hero}>
+                      <button type="button"
+                        onPointerDown={(e)=>{ e.preventDefault(); choose(hero); }}
+                        onMouseEnter={()=>setHighlight(idx)}
+                        className={`w-full text-left flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${idx===highlight?"bg-slate-700":""}`}
+                      >
+                        <Avatar name={hero} />
+                        <span>{hero}</span>
+                      </button>
                     </li>
                   ))}
                 </ul>
