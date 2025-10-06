@@ -4,12 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HoN Matchups — v27s Stable</title>
-  <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React 18 (CDN UMD) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <!-- Babel Standalone para JSX en el navegador -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100">
@@ -18,62 +15,21 @@
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState, useLayoutEffect } = React;
 
-    /** v27s — Stable
-     * - Fix: removed stray '#' and any syntax placeholders
-     * - Full HEROES list for search
-     * - Dark UI, clickable results
-     * - Panel top stays fixed (minHeight grows only)
-     * - Input clears on focus without clearing selected hero
-     */
+    /** v27s — Stable */
+    const HEROES = ["Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Bloodhunter","Bombardier","Bubbles","Chronos","Corrupted Disciple","Defiler","Demented Shaman","Devourer","Dr. Repulsor","Drunken Master","Electrician","Ellonia","Empath","Fayde","Flint Beastwood","Flux","Forsaken Archer","Gauntlet","Gemini","Geomancer","Glacius","Grinex","Gunblade","Hammerstorm","Hellbringer","Jereziah","Keeper of the Forest","King Klout","Kraken","Legionnaire","Lodestone","Magmus","Magebane","Maliken","Martyr","Midas","Monarch","Monkey King","Moon Queen","Moraxus","Myrmidon","Night Hound","Nomad","Nymphora","Ophelia","Pandamonium","Pebbles","Pestilence","Pharaoh","Plague Rider","Pollywog Priest","Predator","Prophet","Puppet Master","Pyromancer","Rampage","Rhapsody","Riftwalker","Sand Wraith","Scout","Silhouette","Sir Benzington","Slither","Solstice","Soul Reaper","Soulstealer","Swiftblade","Tempest","The Chipper","The Gladiator","The Madman","Thunderbringer","Torturer","Tundra","Valkyrie","Vindicator","Voodoo Jester","War Beast","Witch Slayer","Wretched Hag","Zephyr"].sort();
 
-    /* ================= HERO DATA ================= */
-    const HEROES = [
-      "Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Bloodhunter",
-      "Bombardier","Bubbles","Chronos","Corrupted Disciple","Defiler","Demented Shaman","Devourer",
-      "Dr. Repulsor","Drunken Master","Electrician","Ellonia","Empath","Fayde","Flint Beastwood",
-      "Flux","Forsaken Archer","Gauntlet","Gemini","Geomancer","Glacius","Grinex","Gunblade",
-      "Hammerstorm","Hellbringer","Jereziah","Keeper of the Forest","King Klout","Kraken","Legionnaire",
-      "Lodestone","Magmus","Magebane","Maliken","Martyr","Midas","Monarch","Monkey King","Moon Queen",
-      "Moraxus","Myrmidon","Night Hound","Nomad","Nymphora","Ophelia","Pandamonium","Pebbles",
-      "Pestilence","Pharaoh","Plague Rider","Pollywog Priest","Predator","Prophet","Puppet Master",
-      "Pyromancer","Rampage","Rhapsody","Riftwalker","Sand Wraith","Scout","Silhouette","Sir Benzington",
-      "Slither","Solstice","Soul Reaper","Soulstealer","Swiftblade","Tempest","The Chipper","The Gladiator",
-      "The Madman","Thunderbringer","Torturer","Tundra","Valkyrie","Vindicator","Voodoo Jester","War Beast",
-      "Witch Slayer","Wretched Hag","Zephyr"
-    ].sort();
-
-    /* ================= MATCHUPS (BASE, one-way) ================= */
     const MATCHUPS_BASE = {
-      // User-provided updates
-      "Blacksmith": { synergy: ["Swiftblade", "Moon Queen", "Forsaken Archer"], advantage: [], disadvantage: [] },
-      "Bloodhunter": { synergy: [], advantage: ["Thunderbringer", "Wretched Hag"], disadvantage: [] },
-      "Arachna": { synergy: ["Slither"], advantage: ["Pyromancer", "Thunderbringer", "Flint Beastwood", "Soulstealer"], disadvantage: ["Magebane"] },
-      "Pestilence": { synergy: ["Voodoo Jester"], advantage: ["The Madman", "Grinex", "Scout", "Night Hound", "Predator"], disadvantage: ["Puppet Master"] },
-      "Hellbringer": { synergy: ["Voodoo Jester", "Slither", "Magmus"], advantage: [], disadvantage: [] },
-      "Magmus": { synergy: ["Myrmidon", "Witch Slayer", "Pollywog Priest", "Jereziah", "Nymphora"], advantage: [], disadvantage: [] },
+      "Blacksmith": { synergy: ["Swiftblade","Moon Queen","Forsaken Archer"], advantage: [], disadvantage: [] },
+      "Bloodhunter": { synergy: [], advantage: ["Thunderbringer","Wretched Hag"], disadvantage: [] },
+      "Arachna": { synergy: ["Slither"], advantage: ["Pyromancer","Thunderbringer","Flint Beastwood","Soulstealer"], disadvantage: ["Magebane"] },
+      "Pestilence": { synergy: ["Voodoo Jester"], advantage: ["The Madman","Grinex","Scout","Night Hound","Predator"], disadvantage: ["Puppet Master"] },
+      "Hellbringer": { synergy: ["Voodoo Jester","Slither","Magmus"], advantage: [], disadvantage: [] },
+      "Magmus": { synergy: ["Myrmidon","Witch Slayer","Pollywog Priest","Jereziah","Nymphora"], advantage: [], disadvantage: [] },
       "Voodoo Jester": { synergy: ["Swiftblade","Gemini","Gauntlet"], advantage: [], disadvantage: ["Dr. Repulsor"] },
-      "Witch Slayer": {
-        synergy: ["Amun-Ra","Magmus","Pandamonium"],
-        advantage: ["Armadon","Amun-Ra"],
-        disadvantage: ["Swiftblade","Predator","Jereziah","Moraxus","Pebbles","Gunblade"]
-      },
-
-      // Pre-existing sample data
-      "Slither": {
-        synergy: ["Demented Shaman","Amun-Ra","Swiftblade","Vindicator","Arachna"],
-        advantage: ["Armadon"],
-        disadvantage: ["The Chipper","Arachna","Predator","Swiftblade","Jereziah","Accursed","Pebbles"]
-      },
-      "Pandamonium": {
-        synergy: ["Witch Slayer","Voodoo Jester","Monarch"],
-        advantage: ["Predator"],
-        disadvantage: ["Vindicator","Bubbles","Fayde"]
-      },
-      "Bubbles": {
-        synergy: ["Magmus","Behemoth","Plague Rider"],
-        advantage: ["Pandamonium","Voodoo Jester","Monarch","Hammerstorm","Rampage","Myrmidon","Flint Beastwood","Andromeda","Pyromancer"],
-        disadvantage: ["Bloodhunter","Gunblade","Predator","Night Hound"]
-      },
+      "Witch Slayer": { synergy: ["Amun-Ra","Magmus","Pandamonium"], advantage: ["Armadon","Amun-Ra"], disadvantage: ["Swiftblade","Predator","Jereziah","Moraxus","Pebbles","Gunblade"] },
+      "Slither": { synergy: ["Demented Shaman","Amun-Ra","Swiftblade","Vindicator","Arachna"], advantage: ["Armadon"], disadvantage: ["The Chipper","Arachna","Predator","Swiftblade","Jereziah","Accursed","Pebbles"] },
+      "Pandamonium": { synergy: ["Witch Slayer","Voodoo Jester","Monarch"], advantage: ["Predator"], disadvantage: ["Vindicator","Bubbles","Fayde"] },
+      "Bubbles": { synergy: ["Magmus","Behemoth","Plague Rider"], advantage: ["Pandamonium","Voodoo Jester","Monarch","Hammerstorm","Rampage","Myrmidon","Flint Beastwood","Andromeda","Pyromancer"], disadvantage: ["Bloodhunter","Gunblade","Predator","Night Hound"] },
       "Empath": { synergy: ["Predator","Nomad"], advantage: [], disadvantage: [] },
       "Rampage": { synergy: [], advantage: ["Predator"], disadvantage: [] },
       "Pharaoh": { synergy: [], advantage: ["Devourer","Pandamonium","Rampage"], disadvantage: [] },
@@ -89,102 +45,96 @@
       "Bombardier": { synergy: [], advantage: [], disadvantage: ["Arachna","The Chipper","Accursed","Jereziah"] },
       "Flux": { synergy: ["Behemoth","Tempest","Soulstealer","Geomancer","Kraken","Solstice","Legionnaire","Hellbringer"], advantage: [], disadvantage: [] },
       "Hammerstorm": { synergy: ["Rhapsody","Glacius","Monarch"], advantage: [], disadvantage: [] },
-
-      /* ===== SOLO agregado pedido: Ophelia weak vs Glacius, Voodoo Jester, Behemoth ===== */
-      "Ophelia": { synergy: [], advantage: [], disadvantage: ["Glacius", "Voodoo Jester", "Behemoth"] }
+      /* Ophelia weak vs (pedido) */
+      "Ophelia": { synergy: [], advantage: [], disadvantage: ["Glacius","Voodoo Jester","Behemoth"] }
     };
 
-    /* ================= IMAGES ================= */
     const HERO_IMAGES = {
-      "Witch Slayer": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/50/Witch_Slayer.jpg/revision/latest?cb=20130307042554",
-      "Armadon": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/51/Armadon.jpg/revision/latest?cb=20130306185857",
-      "Amun-Ra": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/6f/Amun-Ra.jpg/revision/latest?cb=20130307041228",
-      "Scout": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/46/Scout.jpg/revision/latest?cb=20130307041840",
-      "Magebane": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b3/Magebane.jpg/revision/latest?cb=20130306163313",
-      "Moon Queen": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/10/Moon_Queen.jpg/revision/latest?cb=20130307035643",
-      "Andromeda": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/ab/Andromeda.jpg/revision/latest?cb=20130306185817",
-      "Night Hound": "https://static.wikia.nocookie.net/hon_gamepedia/images/2/2c/Night_Hound.jpg/revision/latest?cb=20130307035751",
-      "Swiftblade": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/e9/Swiftblade.jpg/revision/latest?cb=20130306171444",
-      "Sir Benzington": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b9/Sir_Benzington.jpg/revision/latest?cb=20130505152701",
-      "Silhouette": "https://static.wikia.nocookie.net/hon_gamepedia/images/8/87/Silhouette_Shadow.jpg/revision/latest?cb=20130331200853",
-      "Nomad": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/ec/Nomad.jpg/revision/latest?cb=20130307035805",
-      "Monkey King": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a4/Monkey_King.jpg/revision/latest?cb=20130307035630",
-      "Valkyrie": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/5f/Valkyrie.jpg/revision/latest?cb=20130307042441",
-      "Zephyr": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/35/Zephyr.jpg/revision/latest?cb=20130307042624",
-      "Pyromancer": "https://static.wikia.nocookie.net/hon_gamepedia/images/2/29/Pyromancer.jpg/revision/latest?cb=20130307041213",
-      "Rhapsody": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/4a/Rhapsody.jpg/revision/latest?cb=20130307041347",
-      "Bubbles": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/63/Bubbles.jpg/revision/latest?cb=20130307033206",
-      "The Chipper": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/66/The_Chipper.jpg/revision/latest?cb=20130307042153",
-      "Empath": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d7/Empath.jpg/revision/latest?cb=20130307034409",
-      "Nymphora": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d2/Nymphora.jpg/revision/latest?cb=20130307035825",
-      "Thunderbringer": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/12/Thunderbringer.jpg/revision/latest?cb=20130307042333",
-      "Martyr": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a9/Martyr.jpg/revision/latest?cb=20130307035420",
-      "Monarch": "https://static.wikia.nocookie.net/hon_gamepedia/images/2/26/Monarch.jpg/revision/latest?cb=20130529075138",
-      "Ophelia": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d6/Ophelia.jpg/revision/latest?cb=20130307035908",
-      "Pollywog Priest": "https://static.wikia.nocookie.net/hon_gamepedia/images/0/01/Pollywog_Priest.jpg/revision/latest?cb=20130307041117",
-      "Tempest": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/46/Tempest.jpg/revision/latest?cb=20130307042142",
-      "Vindicator": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/49/Vindicator.jpg/revision/latest?cb=20151021024509",
-      "Ellonia": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/fb/Ellonia.jpg/revision/latest?cb=20130307034312",
-      "Bombardier": "https://static.wikia.nocookie.net/hon_gamepedia/images/9/9c/Bombardier.jpg/revision/latest?cb=20130307033131",
-      "Blacksmith": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/eb/Blacksmith.jpg/revision/latest?cb=20130307032631",
-      "Aluna": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c1/Aluna.jpg/revision/latest?cb=20130306185759",
-      "Tundra": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/e3/Tundra.jpg/revision/latest?cb=20130307042428",
-      "Keeper of the Forest": "https://static.wikia.nocookie.net/hon_gamepedia/images/7/77/Keeper_of_the_Forest.jpg/revision/latest?cb=20150507070751",
-      "Solstice": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/ea/Solstice.jpg/revision/latest?cb=20130307042115",
-      "Pebbles": "https://static.wikia.nocookie.net/hon_gamepedia/images/0/04/Pebbles.jpg/revision/latest?cb=20130307041017",
-      "Rampage": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/f4/Rampage.jpg/revision/latest?cb=20130307041303",
-      "Jereziah": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c6/Jeraziah.jpg/revision/latest?cb=20130307034928",
-      "The Gladiator": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/cb/The_Gladiator.jpg/revision/latest?cb=20130307042300",
-      "Flux": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b1/Flux.jpg/revision/latest?cb=20130307034520",
-      "Drunken Master": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b3/Drunken_Master.jpg/revision/latest?cb=20130307034242",
-      "Behemoth": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/55/Behemoth.jpg/revision/latest?cb=20130306190303",
-      "Predator": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/4e/Predator.jpg/revision/latest?cb=20130307041128",
-      "Pandamonium": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/67/Pandamonium.jpg/revision/latest?cb=20130307035924",
-      "Midas": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/41/Midas.jpg/revision/latest?cb=20130307035556",
-      "Legionnaire": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c0/Legionnaire.jpg/revision/latest?cb=20130307035053",
-      "Hammerstorm": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a6/Hammerstorm.jpg/revision/latest?cb=20130307034850",
-      "War Beast": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d7/War_Beast.jpg/revision/latest?cb=20130307042525",
-      "Pestilence": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/39/Pestilence.jpg/revision/latest?cb=20130307041031",
-      "Pharaoh": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a1/Pharaoh.jpg/revision/latest?cb=20130307041047",
-      "Moraxus": "https://static.wikia.nocookie.net/hon_gamepedia/images/2/2f/Moraxus.jpg/revision/latest?cb=20130307035709",
-      "Lodestone": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c4/Lodestone.jpg/revision/latest?cb=20130307035157",
-      "Devourer": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/67/Devourer.jpg/revision/latest?cb=20130307034125",
-      "Electrician": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/19/Electrician.jpg/revision/latest?cb=20130307034256",
-      "Gauntlet": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/f9/Gauntlet.jpg/revision/latest?cb=20130307034557",
-      "King Klout": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/12/King_Klout.jpg/revision/latest?cb=20151215201244",
-      "Kraken": "https://static.wikia.nocookie.net/hon_gamepedia/images/0/0a/Kraken.jpg/revision/latest?cb=20130307035035",
-      "Accursed": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/4a/Accursed.jpg/revision/latest?cb=20130306185735",
-      "Maliken": "https://static.wikia.nocookie.net/hon_gamepedia/images/2/29/Maliken.jpg/revision/latest?cb=20130307035402",
-      "Magmus": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/45/Magmus.jpg/revision/latest?cb=20130307035347",
-      "Torturer": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a9/Torturer.jpg/revision/latest?cb=20130307042351",
-      "Voodoo Jester": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/59/Voodoo_Jester.jpg/revision/latest?cb=20130307042513",
-      "Riftwalker": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/ae/Riftwalker.jpg/revision/latest?cb=20130307041421",
-      "Puppet Master": "https://static.wikia.nocookie.net/hon_gamepedia/images/7/7c/Puppet_Master.jpg/revision/latest?cb=20130307041200",
-      "Prophet": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/6a/Prophet.jpg/revision/latest?cb=20130307041144",
-      "Soul Reaper": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/40/Soul_Reaper.jpg/revision/latest?cb=20130307042128",
-      "Wretched Hag": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/e5/Wretched_Hag.jpg/revision/latest?cb=20130307042607",
-      "Fayde": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b8/Fayde.jpg/revision/latest?cb=20130307034449",
-      "Geomancer": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c3/Geomancer_Old.jpg/revision/latest?cb=20180312123120",
-      "Hellbringer": "https://static.wikia.nocookie.net/hon_gamepedia/images/0/01/Hellbringer.jpg/revision/latest?cb=20130307034904",
-      "Plague Rider": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d5/Plague_Rider.jpg/revision/latest?cb=20130307041100",
-      "Myrmidon": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/40/Myrmidon.jpg/revision/latest?cb=20130307035729",
-      "Glacius": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b8/Glacius.jpg/revision/latest?cb=20130307034650",
-      "Dr. Repulsor": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/ce/Doctor_Repulsor.jpg/revision/latest?cb=20130729010055",
-      "Demented Shaman": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/f8/Demented_Shaman.jpg/revision/latest?cb=20130307034052",
-      "Defiler": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/1c/Defiler.jpg/revision/latest?cb=20130307034036",
-      "Soulstealer": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a6/Soulstealer.jpg/revision/latest?cb=20130308050019",
-      "The Madman": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/ed/The_Madman.jpg/revision/latest?cb=20130307042317",
-      "Sand Wraith": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/55/Sand_Wraith.jpg/revision/latest?cb=20170815133734",
-      "Gemini": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/e8/Gemini.jpg/revision/latest?cb=20130307034613",
-      "Slither": "https://static.wikia.nocookie.net/hon_gamepedia/images/0/05/Slither.jpg/revision/latest?cb=20130307042058",
-      "Corrupted Disciple": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/de/Corrupted_Disciple.jpg/revision/latest?cb=20130307033445",
-      "Gunblade": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/31/Gunblade.jpg/revision/latest?cb=20130307034812",
-      "Flint Beastwood": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/6e/Flint_Beastwood.jpg/revision/latest?cb=20130307034504",
-      "Chronos": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/ba/Chronos.jpg/revision/latest?cb=20180112204658",
-      "Bloodhunter": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/37/Blood_Hunter.jpg/revision/latest?cb=20130307033115",
-      "Arachna": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/4d/Arachna.jpg/revision/latest?cb=20130306185841",
-      "Forsaken Archer": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/fc/Forsaken_Archer.jpg/revision/latest?cb=20151021024504",
-      "Grinex": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/31/Grinex.jpg/revision/latest?cb=20130307034755"
+      "Witch Slayer":"https://static.wikia.nocookie.net/hon_gamepedia/images/5/50/Witch_Slayer.jpg/revision/latest?cb=20130307042554",
+      "Armadon":"https://static.wikia.nocookie.net/hon_gamepedia/images/5/51/Armadon.jpg/revision/latest?cb=20130306185857",
+      "Amun-Ra":"https://static.wikia.nocookie.net/hon_gamepedia/images/6/6f/Amun-Ra.jpg/revision/latest?cb=20130307041228",
+      "Scout":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/46/Scout.jpg/revision/latest?cb=20130307041840",
+      "Magebane":"https://static.wikia.nocookie.net/hon_gamepedia/images/b/b3/Magebane.jpg/revision/latest?cb=20130306163313",
+      "Moon Queen":"https://static.wikia.nocookie.net/hon_gamepedia/images/1/10/Moon_Queen.jpg/revision/latest?cb=20130307035643",
+      "Andromeda":"https://static.wikia.nocookie.net/hon_gamepedia/images/a/ab/Andromeda.jpg/revision/latest?cb=20130306185817",
+      "Night Hound":"https://static.wikia.nocookie.net/hon_gamepedia/images/2/2c/Night_Hound.jpg/revision/latest?cb=20130307035751",
+      "Swiftblade":"https://static.wikia.nocookie.net/hon_gamepedia/images/e/e9/Swiftblade.jpg/revision/latest?cb=20130306171444",
+      "Sir Benzington":"https://static.wikia.nocookie.net/hon_gamepedia/images/b/b9/Sir_Benzington.jpg/revision/latest?cb=20130505152701",
+      "Silhouette":"https://static.wikia.nocookie.net/hon_gamepedia/images/8/87/Silhouette_Shadow.jpg/revision/latest?cb=20130331200853",
+      "Nomad":"https://static.wikia.nocookie.net/hon_gamepedia/images/e/ec/Nomad.jpg/revision/latest?cb=20130307035805",
+      "Monkey King":"https://static.wikia.nocookie.net/hon_gamepedia/images/a/a4/Monkey_King.jpg/revision/latest?cb=20130307035630",
+      "Valkyrie":"https://static.wikia.nocookie.net/hon_gamepedia/images/5/5f/Valkyrie.jpg/revision/latest?cb=20130307042441",
+      "Zephyr":"https://static.wikia.nocookie.net/hon_gamepedia/images/3/35/Zephyr.jpg/revision/latest?cb=20130307042624",
+      "Pyromancer":"https://static.wikia.nocookie.net/hon_gamepedia/images/2/29/Pyromancer.jpg/revision/latest?cb=20130307041213",
+      "Rhapsody":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/4a/Rhapsody.jpg/revision/latest?cb=20130307041347",
+      "Bubbles":"https://static.wikia.nocookie.net/hon_gamepedia/images/6/63/Bubbles.jpg/revision/latest?cb=20130307033206",
+      "The Chipper":"https://static.wikia.nocookie.net/hon_gamepedia/images/6/66/The_Chipper.jpg/revision/latest?cb=20130307042153",
+      "Empath":"https://static.wikia.nocookie.net/hon_gamepedia/images/d/d7/Empath.jpg/revision/latest?cb=20130307034409",
+      "Nymphora":"https://static.wikia.nocookie.net/hon_gamepedia/images/d/d2/Nymphora.jpg/revision/latest?cb=20130307035825",
+      "Thunderbringer":"https://static.wikia.nocookie.net/hon_gamepedia/images/1/12/Thunderbringer.jpg/revision/latest?cb=20130307042333",
+      "Martyr":"https://static.wikia.nocookie.net/hon_gamepedia/images/a/a9/Martyr.jpg/revision/latest?cb=20130307035420",
+      "Monarch":"https://static.wikia.nocookie.net/hon_gamepedia/images/2/26/Monarch.jpg/revision/latest?cb=20130529075138",
+      "Ophelia":"https://static.wikia.nocookie.net/hon_gamepedia/images/d/d6/Ophelia.jpg/revision/latest?cb=20130307035908",
+      "Pollywog Priest":"https://static.wikia.nocookie.net/hon_gamepedia/images/0/01/Pollywog_Priest.jpg/revision/latest?cb=20130307041117",
+      "Tempest":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/46/Tempest.jpg/revision/latest?cb=20130307042142",
+      "Vindicator":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/49/Vindicator.jpg/revision/latest?cb=20151021024509",
+      "Ellonia":"https://static.wikia.nocookie.net/hon_gamepedia/images/f/fb/Ellonia.jpg/revision/latest?cb=20130307034312",
+      "Bombardier":"https://static.wikia.nocookie.net/hon_gamepedia/images/9/9c/Bombardier.jpg/revision/latest?cb=20130307033131",
+      "Blacksmith":"https://static.wikia.nocookie.net/hon_gamepedia/images/e/eb/Blacksmith.jpg/revision/latest?cb=20130307032631",
+      "Aluna":"https://static.wikia.nocookie.net/hon_gamepedia/images/c/c1/Aluna.jpg/revision/latest?cb=20130306185759",
+      "Tundra":"https://static.wikia.nocookie.net/hon_gamepedia/images/e/e3/Tundra.jpg/revision/latest?cb=20130307042428",
+      "Keeper of the Forest":"https://static.wikia.nocookie.net/hon_gamepedia/images/7/77/Keeper_of_the_Forest.jpg/revision/latest?cb=20150507070751",
+      "Solstice":"https://static.wikia.nocookie.net/hon_gamepedia/images/e/ea/Solstice.jpg/revision/latest?cb=20130307042115",
+      "Pebbles":"https://static.wikia.nocookie.net/hon_gamepedia/images/0/04/Pebbles.jpg/revision/latest?cb=20130307041017",
+      "Rampage":"https://static.wikia.nocookie.net/hon_gamepedia/images/f/f4/Rampage.jpg/revision/latest?cb=20130307041303",
+      "Jereziah":"https://static.wikia.nocookie.net/hon_gamepedia/images/c/c6/Jeraziah.jpg/revision/latest?cb=20130307034928",
+      "The Gladiator":"https://static.wikia.nocookie.net/hon_gamepedia/images/c/cb/The_Gladiator.jpg/revision/latest?cb=20130307042300",
+      "Flux":"https://static.wikia.nocookie.net/hon_gamepedia/images/b/b1/Flux.jpg/revision/latest?cb=20130307034520",
+      "Drunken Master":"https://static.wikia.nocookie.net/hon_gamepedia/images/b/b3/Drunken_Master.jpg/revision/latest?cb=20130307034242",
+      "Behemoth":"https://static.wikia.nocookie.net/hon_gamepedia/images/5/55/Behemoth.jpg/revision/latest?cb=20130306190303",
+      "Predator":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/4e/Predator.jpg/revision/latest?cb=20130307041128",
+      "Pandamonium":"https://static.wikia.nocookie.net/hon_gamepedia/images/6/67/Pandamonium.jpg/revision/latest?cb=20130307035924",
+      "Midas":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/41/Midas.jpg/revision/latest?cb=20130307035556",
+      "Legionnaire":"https://static.wikia.nocookie.net/hon_gamepedia/images/c/c0/Legionnaire.jpg/revision/latest?cb=20130307035053",
+      "Hammerstorm":"https://static.wikia.nocookie.net/hon_gamepedia/images/a/a6/Hammerstorm.jpg/revision/latest?cb=20130307034850",
+      "War Beast":"https://static.wikia.nocookie.net/hon_gamepedia/images/d/d7/War_Beast.jpg/revision/latest?cb=20130307042525",
+      "Pestilence":"https://static.wikia.nocookie.net/hon_gamepedia/images/3/39/Pestilence.jpg/revision/latest?cb=20130307041031",
+      "Pharaoh":"https://static.wikia.nocookie.net/hon_gamepedia/images/a/a1/Pharaoh.jpg/revision/latest?cb=20130307041047",
+      "Moraxus":"https://static.wikia.nocookie.net/hon_gamepedia/images/2/2f/Moraxus.jpg/revision/latest?cb=20130307035709",
+      "Lodestone":"https://static.wikia.nocookie.net/hon_gamepedia/images/c/c4/Lodestone.jpg/revision/latest?cb=20130307035157",
+      "Devourer":"https://static.wikia.nocookie.net/hon_gamepedia/images/6/67/Devourer.jpg/revision/latest?cb=20130307034125",
+      "Electrician":"https://static.wikia.nocookie.net/hon_gamepedia/images/1/19/Electrician.jpg/revision/latest?cb=20130307034256",
+      "Gauntlet":"https://static.wikia.nocookie.net/hon_gamepedia/images/f/f9/Gauntlet.jpg/revision/latest?cb=20130307034557",
+      "King Klout":"https://static.wikia.nocookie.net/hon_gamepedia/images/1/12/King_Klout.jpg/revision/latest?cb=20151215201244",
+      "Kraken":"https://static.wikia.nocookie.net/hon_gamepedia/images/0/0a/Kraken.jpg/revision/latest?cb=20130307035035",
+      "Accursed":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/4a/Accursed.jpg/revision/latest?cb=20130306185735",
+      "Maliken":"https://static.wikia.nocookie.net/hon_gamepedia/images/2/29/Maliken.jpg/revision/latest?cb=20130307035402",
+      "Magmus":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/45/Magmus.jpg/revision/latest?cb=20130307035347",
+      "Torturer":"https://static.wikia.nocookie.net/hon_gamepedia/images/a/a9/Torturer.jpg/revision/latest?cb=20130307042351",
+      "Voodoo Jester":"https://static.wikia.nocookie.net/hon_gamepedia/images/5/59/Voodoo_Jester.jpg/revision/latest?cb=20130307042513",
+      "Riftwalker":"https://static.wikia.nocookie.net/hon_gamepedia/images/a/ae/Riftwalker.jpg/revision/latest?cb=20130307041421",
+      "Puppet Master":"https://static.wikia.nocookie.net/hon_gamepedia/images/7/7c/Puppet_Master.jpg/revision/latest?cb=20130307041200",
+      "Prophet":"https://static.wikia.nocookie.net/hon_gamepedia/images/6/6a/Prophet.jpg/revision/latest?cb=20130307041144",
+      "Soul Reaper":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/40/Soul_Reaper.jpg/revision/latest?cb=20130307042128",
+      "Wretched Hag":"https://static.wikia.nocookie.net/hon_gamepedia/images/e/e5/Wretched_Hag.jpg/revision/latest?cb=20130307042607",
+      "Fayde":"https://static.wikia.nocookie.net/hon_gamepedia/images/b/b8/Fayde.jpg/revision/latest?cb=20130307034449",
+      "Geomancer":"https://static.wikia.nocookie.net/hon_gamepedia/images/c/c3/Geomancer_Old.jpg/revision/latest?cb=20180312123120",
+      "Hellbringer":"https://static.wikia.nocookie.net/hon_gamepedia/images/0/01/Hellbringer.jpg/revision/latest?cb=20130307034904",
+      "Plague Rider":"https://static.wikia.nocookie.net/hon_gamepedia/images/d/d5/Plague_Rider.jpg/revision/latest?cb=20130307041100",
+      "Myrmidon":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/40/Myrmidon.jpg/revision/latest?cb=20130307035729",
+      "Glacius":"https://static.wikia.nocookie.net/hon_gamepedia/images/b/b8/Glacius.jpg/revision/latest?cb=20130307034650",
+      "Dr. Repulsor":"https://static.wikia.nocookie.net/hon_gamepedia/images/c/ce/Doctor_Repulsor.jpg/revision/latest?cb=20130729010055",
+      "Defiler":"https://static.wikia.nocookie.net/hon_gamepedia/images/1/1c/Defiler.jpg/revision/latest?cb=20130307034036",
+      "Soulstealer":"https://static.wikia.nocookie.net/hon_gamepedia/images/a/a6/Soulstealer.jpg/revision/latest?cb=20130308050019",
+      "The Madman":"https://static.wikia.nocookie.net/hon_gamepedia/images/e/ed/The_Madman.jpg/revision/latest?cb=20130307042317",
+      "Sand Wraith":"https://static.wikia.nocookie.net/hon_gamepedia/images/5/55/Sand_Wraith.jpg/revision/latest?cb=20170815133734",
+      "Gemini":"https://static.wikia.nocookie.net/hon_gamepedia/images/e/e8/Gemini.jpg/revision/latest?cb=20130307034613",
+      "Flint Beastwood":"https://static.wikia.nocookie.net/hon_gamepedia/images/6/6e/Flint_Beastwood.jpg/revision/latest?cb=20130307034504",
+      "Chronos":"https://static.wikia.nocookie.net/hon_gamepedia/images/b/ba/Chronos.jpg/revision/latest?cb=20180112204658",
+      "Bloodhunter":"https://static.wikia.nocookie.net/hon_gamepedia/images/3/37/Blood_Hunter.jpg/revision/latest?cb=20130307033115",
+      "Arachna":"https://static.wikia.nocookie.net/hon_gamepedia/images/4/4d/Arachna.jpg/revision/latest?cb=20130306185841",
+      "Forsaken Archer":"https://static.wikia.nocookie.net/hon_gamepedia/images/f/fc/Forsaken_Archer.jpg/revision/latest?cb=20151021024504",
+      "Grinex":"https://static.wikia.nocookie.net/hon_gamepedia/images/3/31/Grinex.jpg/revision/latest?cb=20130307034755"
     };
 
     const IMAGE_BASE = "./assets/hon";
@@ -202,7 +152,6 @@
           disadvantage: Array.from(new Set(e.disadvantage || []))
         };
       }
-      // Mirrors
       for (const a of Object.keys(out)) {
         for (const b of out[a].synergy) if (allHeroes.has(b) && !out[b].synergy.includes(a)) out[b].synergy.push(a);
         for (const b of out[a].advantage) if (allHeroes.has(b) && !out[b].disadvantage.includes(a)) out[b].disadvantage.push(a);
@@ -222,14 +171,35 @@
     /* ================= UI COMPONENTS ================= */
     function Avatar({ name, size = 24 }) {
       const [extIndex, setExtIndex] = useState(0);
-      const url = HERO_IMAGES[name] || `${IMAGE_BASE}/${name.replace(/\s+/g, "_")}.${IMAGE_EXTS[extIndex]}`;
+      const hasDirect = !!HERO_IMAGES[name];
+      const url = hasDirect
+        ? HERO_IMAGES[name]
+        : `${IMAGE_BASE}/${name.replace(/\s+/g, "_")}.${IMAGE_EXTS[extIndex]}`;
       const initials = name.split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase();
       const dim = `${size}px`;
-      const tryNext = ()=>setExtIndex(i => i + 1);
+
+      function onErr() {
+        if (hasDirect) {
+          // Si la imagen externa falla, muestro iniciales (no cambio a rutas locales inexistentes)
+          setExtIndex(IMAGE_EXTS.length);
+        } else {
+          // Solo ciclar extensiones cuando usamos assets locales
+          setExtIndex(i => i + 1);
+        }
+      }
+
       return (
         <div style={{width:dim,height:dim}} className="inline-flex items-center justify-center rounded-lg bg-slate-700 text-slate-100 overflow-hidden">
           {extIndex < IMAGE_EXTS.length ? (
-            <img src={url} alt={name} decoding="async" onError={tryNext} style={{width:"100%",height:"100%",objectFit:"cover"}} />
+            <img
+              src={url}
+              alt={name}
+              decoding="async"
+              referrerPolicy="no-referrer"
+              crossOrigin="anonymous"
+              onError={onErr}
+              style={{width:"100%",height:"100%",objectFit:"cover"}}
+            />
           ) : (
             <span style={{fontSize: size>32?14:12}} className="font-semibold">{initials}</span>
           )}
@@ -334,15 +304,11 @@
       );
     }
 
-    // ====== Tests (keep existing, add new) ======
     (function runTests(){
       const t=(name,cond)=>{ if(!cond) throw new Error(name); console.log("✅",name); };
       try {
-        // Existing tests (unchanged)
         t("Search contains many heroes", HEROES.length > 70);
         t("Image map contains Grinex", !!HERO_IMAGES["Grinex"] === false ? true : true);
-
-        // Additional sanity tests (do not modify existing ones)
         const MATCHUPS_TEST = deriveMatchups(MATCHUPS_BASE);
         t("Blacksmith partners include Swiftblade", MATCHUPS_TEST["Blacksmith"].synergy.includes("Swiftblade"));
         t("Bloodhunter strong vs Wretched Hag", MATCHUPS_TEST["Bloodhunter"].advantage.includes("Wretched Hag"));
@@ -351,11 +317,8 @@
         t("Hellbringer partners include Magmus", MATCHUPS_TEST["Hellbringer"].synergy.includes("Magmus"));
         t("Magmus partners include Witch Slayer", MATCHUPS_TEST["Magmus"].synergy.includes("Witch Slayer"));
         t("Voodoo Jester weak vs Dr. Repulsor", MATCHUPS_TEST["Voodoo Jester"].disadvantage.includes("Dr. Repulsor"));
-
-        // Mirror expectations (deriveMatchups)
         t("Mirror check: Thunderbringer weak vs Arachna", MATCHUPS_TEST["Thunderbringer"].disadvantage.includes("Arachna"));
         t("Mirror check: The Madman weak vs Pestilence", MATCHUPS_TEST["The Madman"].disadvantage.includes("Pestilence"));
-
         console.log("All tests passed ✅");
       } catch(e){ console.error("❌ Test failed:", e.message); }
     })();
