@@ -4,23 +4,22 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HoN Matchups</title>
-  <!-- Tailwind CDN (modo JIT) -->
+  <!-- Tailwind para estilos -->
   <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-900">
-  <div id="root"></div>
-
-  <!-- React + ReactDOM UMD -->
+  <!-- React + ReactDOM (modo navegador) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <!-- Babel para poder usar JSX directamente en el navegador -->
+  <!-- Babel para poder usar JSX directo en el navegador -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-900 text-white">
+  <div id="root"></div>
 
-  <!-- TU APP: pega el código aquí dentro -->
+  <!-- TU APP -->
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
 
-    /** v24 — mismos datos que venías usando **/
+    /** v24 — App con todos los últimos cambios del chat */
     const HEROES = [
       "Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Bloodhunter",
       "Bombardier","Bubbles","Chronos","Corrupted Disciple","Defiler","Demented Shaman","Devourer",
@@ -74,7 +73,7 @@
       "Corrupted Disciple": { synergy: [], advantage: ["Predator"], disadvantage: [] },
       "Glacius": { synergy: ["Devourer","Swiftblade"], advantage: [], disadvantage: [] },
 
-      // Nuevos
+      // Nuevos pedidos
       "Electrician": { synergy: ["Swiftblade"], advantage: [], disadvantage: [] },
       "King Klout": { synergy: [], advantage: ["Devourer","Pandamonium"], disadvantage: [] },
       "Swiftblade": { synergy: [], advantage: ["Predator"], disadvantage: [] },
@@ -115,7 +114,7 @@
           if (!out[b].advantage.includes(a)) out[b].advantage.push(a);
         }
       }
-      // Limpieza y orden
+      // Limpieza + orden
       for (const h of Object.keys(out)) {
         const clean = (arr) => Array.from(new Set(arr.filter(x => x && x !== h))).sort();
         out[h].synergy = clean(out[h].synergy);
@@ -127,6 +126,7 @@
 
     const MATCHUPS = deriveMatchups(MATCHUPS_BASE);
 
+    // Imágenes (las que tienes por ahora)
     const HERO_IMAGES = {
       "Witch Slayer": "https://i.imgur.com/fvR09eK.png",
       "Armadon"    : "https://i.imgur.com/5yT5NaM.png",
@@ -270,7 +270,7 @@
 
             <footer className="mt-10 text-center text-xs text-slate-400">
               <p>Developed by Nicket</p>
-              <p>v24 — GitHub Pages single-file build</p>
+              <p>v24 — GitHub Pages single-file</p>
             </footer>
           </div>
         </div>
