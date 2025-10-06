@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HoN Matchups — v27s Stable</title>
 
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React 18 + Babel -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -17,23 +20,7 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo, useRef, useLayoutEffect } = React;
 
-    // ===== Base path robusto para GitHub Pages =====
-    // - User/Org page (usuario.github.io): basePath = "" (raíz)
-    // - Project page (usuario.github.io/REPO): basePath = "/REPO"
-    const computeBasePath = () => {
-      // Si la ruta es "/REPO/" o "/REPO/index.html", quedarnos con "/REPO"
-      let p = window.location.pathname.replace(/\/index\.html$/, "");
-      // quitar slash final excepto si es "/"
-      if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
-      return p;
-    };
-    const BASE = computeBasePath();
-    const assetUrl = (rel) => `${BASE}/assets/${rel}`;     // p.ej. assetUrl("logo_reborn.png")
-    const heroAsset = (file) => assetUrl(`hon/${file}`);   // p.ej. heroAsset("Arachna.webp")
-
-    /** v27s — Stable (solo imágenes locales) */
-
-    /* ================= HERO DATA ================= */
+    /* =============== HERO DATA =============== */
     const HEROES = [
       "Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Blood Hunter",
       "Bombardier","Bubbles","Chronos","Corrupted Disciple","Defiler","Demented Shaman","Devourer",
@@ -49,7 +36,7 @@
       "Witch Slayer","Wretched Hag","Zephyr"
     ].sort();
 
-    /* ================= MATCHUPS (BASE, one-way) ================= */
+    /* =============== MATCHUPS (BASE) =============== */
     const MATCHUPS_BASE = {
       "Blacksmith": { synergy: ["Swiftblade", "Moon Queen", "Forsaken Archer"], advantage: [], disadvantage: [] },
       "Blood Hunter": { synergy: [], advantage: ["Thunderbringer", "Wretched Hag"], disadvantage: [] },
@@ -96,8 +83,7 @@
       "Ophelia": { synergy: [], advantage: [], disadvantage: ["Glacius","Voodoo Jester","Behemoth"] }
     };
 
-    const IMAGE_BASE = "hon"; // subcarpeta dentro de /assets
-
+    /* =============== LÓGICA ================= */
     function deriveMatchups(base) {
       const all = new Set(HEROES);
       const out = {};
@@ -125,13 +111,14 @@
 
     const MATCHUPS = deriveMatchups(MATCHUPS_BASE);
 
+    /* =============== AVATAR ================= */
     function Avatar({ name, size = 24 }) {
       const [i, setI] = useState(0);
       const file = name.replace(/\s+/g, "_");
       const candidates = [
-        heroAsset(`${file}.webp`),
-        heroAsset(`${file}.png`),
-        heroAsset(`${file}.jpg`)
+        `./assets/hon/${file}.webp`,
+        `./assets/hon/${file}.png`,
+        `./assets/hon/${file}.jpg`
       ];
       const src = i < candidates.length ? candidates[i] : null;
       const dim = `${size}px`;
@@ -147,6 +134,7 @@
       );
     }
 
+    /* =============== APP ================= */
     function App(){
       const [query,setQuery]=useState("");
       const [open,setOpen]=useState(false);
@@ -184,8 +172,7 @@
         <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6">
           <div className="w-full max-w-3xl">
             <header className="mb-6 text-center">
-              <!-- Logo con basePath dinámico -->
-              <img src={assetUrl("logo_reborn.png")} alt="HoN Reborn Logo" className="mx-auto mb-3 h-16 w-auto" decoding="async" />
+              <img src="./assets/hon/logo_reborn.png" alt="HoN Reborn Logo" className="mx-auto mb-3 h-16 w-auto" decoding="async" />
               <h1 className="text-3xl font-bold">HoN Matchups</h1>
               <p className="text-slate-400">Hero synergy and matchup finder</p>
             </header>
@@ -248,8 +235,7 @@
       );
     }
 
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App />);
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 </body>
 </html>
