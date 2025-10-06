@@ -1,389 +1,211 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HoN Matchups — v27s Stable</title>
+import React, { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 
-  <!-- Tailwind para estilos -->
-  <script src="https://cdn.tailwindcss.com"></script>
+// Preview en canvas sin el logo Imgur, usando logo local de assets/logo_reborn.png
 
-  <!-- React 18 UMD + Babel (para usar JSX directo en el navegador) -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-</head>
-<body class="bg-slate-900 text-slate-100">
-  <div id="root"></div>
+const HEROES = [
+  "Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Blood Hunter","Bombardier","Bubbles","Chronos","Corrupted Disciple","Defiler","Demented Shaman","Devourer","Doctor Repulsor","Drunken Master","Electrician","Ellonia","Empath","Fayde","Flint Beastwood","Flux","Forsaken Archer","Gauntlet","Gemini","Geomancer","Glacius","Grinex","Gunblade","Hammerstorm","Hellbringer","Jeraziah","Keeper of the Forest","King Klout","Kraken","Legionnaire","Lodestone","Magmus","Magebane","Maliken","Martyr","Midas","Monarch","Monkey King","Moon Queen","Moraxus","Myrmidon","Night Hound","Nomad","Nymphora","Ophelia","Pandamonium","Pebbles","Pestilence","Pharaoh","Plague Rider","Pollywog Priest","Predator","Prophet","Puppet Master","Pyromancer","Rampage","Rhapsody","Riftwalker","Sand Wraith","Scout","Silhouette","Sir Benzington","Slither","Solstice","Soul Reaper","Soulstealer","Swiftblade","Tempest","The Chipper","The Gladiator","The Madman","Thunderbringer","Torturer","Tundra","Valkyrie","Vindicator","Voodoo Jester","War Beast","Witch Slayer","Wretched Hag","Zephyr"
+].sort();
 
-  <!-- Tu app completa en JSX -->
-  <script type="text/babel">
-    const { useEffect, useMemo, useRef, useState, useLayoutEffect } = React;
+const MATCHUPS_BASE = {
+  "Blacksmith": { synergy: ["Swiftblade", "Moon Queen", "Forsaken Archer"], advantage: [], disadvantage: [] },
+  "Blood Hunter": { synergy: [], advantage: ["Thunderbringer", "Wretched Hag"], disadvantage: [] },
+  "Arachna": { synergy: ["Slither"], advantage: ["Pyromancer", "Thunderbringer", "Flint Beastwood", "Soulstealer"], disadvantage: ["Magebane"] },
+  "Pestilence": { synergy: ["Voodoo Jester"], advantage: ["The Madman", "Grinex", "Scout", "Night Hound", "Predator"], disadvantage: ["Puppet Master"] },
+  "Hellbringer": { synergy: ["Voodoo Jester", "Slither", "Magmus"], advantage: [], disadvantage: [] },
+  "Magmus": { synergy: ["Myrmidon", "Witch Slayer", "Pollywog Priest", "Jeraziah", "Nymphora"], advantage: [], disadvantage: [] },
+  "Voodoo Jester": { synergy: ["Swiftblade","Gemini","Gauntlet"], advantage: [], disadvantage: ["Doctor Repulsor"] },
+  "Witch Slayer": {
+    synergy: ["Amun-Ra","Magmus","Pandamonium"],
+    advantage: ["Armadon","Amun-Ra"],
+    disadvantage: ["Swiftblade","Predator","Jeraziah","Moraxus","Pebbles","Gunblade"]
+  },
+  "Slither": {
+    synergy: ["Demented Shaman","Amun-Ra","Swiftblade","Vindicator","Arachna"],
+    advantage: ["Armadon"],
+    disadvantage: ["The Chipper","Arachna","Predator","Swiftblade","Jeraziah","Accursed","Pebbles"]
+  },
+  "Pandamonium": {
+    synergy: ["Witch Slayer","Voodoo Jester","Monarch"],
+    advantage: ["Predator"],
+    disadvantage: ["Vindicator","Bubbles","Fayde"]
+  },
+  "Bubbles": {
+    synergy: ["Magmus","Behemoth","Plague Rider"],
+    advantage: ["Pandamonium","Voodoo Jester","Monarch","Hammerstorm","Rampage","Myrmidon","Flint Beastwood","Andromeda","Pyromancer"],
+    disadvantage: ["Blood Hunter","Gunblade","Predator","Night Hound"]
+  },
+  "Empath": { synergy: ["Predator","Nomad"], advantage: [], disadvantage: [] },
+  "Rampage": { synergy: [], advantage: ["Predator"], disadvantage: [] },
+  "Pharaoh": { synergy: [], advantage: ["Devourer","Pandamonium","Rampage"], disadvantage: [] },
+  "Magebane": { synergy: [], advantage: ["Amun-Ra"], disadvantage: [] },
+  "Corrupted Disciple": { synergy: [], advantage: ["Predator"], disadvantage: [] },
+  "Glacius": { synergy: ["Devourer","Swiftblade"], advantage: [], disadvantage: [] },
+  "Electrician": { synergy: ["Swiftblade"], advantage: [], disadvantage: [] },
+  "King Klout": { synergy: [], advantage: ["Devourer","Pandamonium"], disadvantage: [] },
+  "Swiftblade": { synergy: [], advantage: ["Predator"], disadvantage: [] },
+  "Moraxus": { synergy: [], advantage: ["Pollywog Priest"], disadvantage: [] },
+  "Vindicator": { synergy: [], advantage: ["Tempest"], disadvantage: [] },
+  "The Chipper": { synergy: [], advantage: ["Thunderbringer","Pyromancer"], disadvantage: [] },
+  "Bombardier": { synergy: [], advantage: [], disadvantage: ["Arachna","The Chipper","Accursed","Jeraziah"] },
+  "Flux": { synergy: ["Behemoth","Tempest","Soulstealer","Geomancer","Kraken","Solstice","Legionnaire","Hellbringer"], advantage: [], disadvantage: [] },
+  "Hammerstorm": { synergy: ["Rhapsody","Glacius","Monarch"], advantage: [], disadvantage: [] },
+  "Ophelia": { synergy: [], advantage: [], disadvantage: ["Glacius","Voodoo Jester","Behemoth"] }
+};
 
-    /** v27s — Stable
-     * - Full HEROES list para búsqueda
-     * - Panel no “salta” (minHeight)
-     * - Input limpia al enfocar sin borrar el seleccionado
-     * - Ophelia weak vs (pedido)
-     */
+const HERO_IMAGES = {};
+const IMAGE_BASE = "./assets/hon";
 
-    /* ================= HERO DATA ================= */
-    const HEROES = [
-      "Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Blood Hunter",
-      "Bombardier","Bubbles","Chronos","Corrupted Disciple","Defiler","Demented Shaman","Devourer",
-      "Doctor Repulsor","Drunken Master","Electrician","Ellonia","Empath","Fayde","Flint Beastwood",
-      "Flux","Forsaken Archer","Gauntlet","Gemini","Geomancer","Glacius","Grinex","Gunblade",
-      "Hammerstorm","Hellbringer","Jeraziah","Keeper of the Forest","King Klout","Kraken","Legionnaire",
-      "Lodestone","Magmus","Magebane","Maliken","Martyr","Midas","Monarch","Monkey King","Moon Queen",
-      "Moraxus","Myrmidon","Night Hound","Nomad","Nymphora","Ophelia","Pandamonium","Pebbles",
-      "Pestilence","Pharaoh","Plague Rider","Pollywog Priest","Predator","Prophet","Puppet Master",
-      "Pyromancer","Rampage","Rhapsody","Riftwalker","Sand Wraith","Scout","Silhouette","Sir Benzington",
-      "Slither","Solstice","Soul Reaper","Soulstealer","Swiftblade","Tempest","The Chipper","The Gladiator",
-      "The Madman","Thunderbringer","Torturer","Tundra","Valkyrie","Vindicator","Voodoo Jester","War Beast",
-      "Witch Slayer","Wretched Hag","Zephyr"
-    ].sort();
-
-    /* ================= MATCHUPS (BASE, one-way) ================= */
-    const MATCHUPS_BASE = {
-      // User-provided updates
-      "Blacksmith": { synergy: ["Swiftblade", "Moon Queen", "Forsaken Archer"], advantage: [], disadvantage: [] },
-      "Blood Hunter": { synergy: [], advantage: ["Thunderbringer", "Wretched Hag"], disadvantage: [] },
-      "Arachna": { synergy: ["Slither"], advantage: ["Pyromancer", "Thunderbringer", "Flint Beastwood", "Soulstealer"], disadvantage: ["Magebane"] },
-      "Pestilence": { synergy: ["Voodoo Jester"], advantage: ["The Madman", "Grinex", "Scout", "Night Hound", "Predator"], disadvantage: ["Puppet Master"] },
-      "Hellbringer": { synergy: ["Voodoo Jester", "Slither", "Magmus"], advantage: [], disadvantage: [] },
-      "Magmus": { synergy: ["Myrmidon", "Witch Slayer", "Pollywog Priest", "Jeraziah", "Nymphora"], advantage: [], disadvantage: [] },
-      "Voodoo Jester": { synergy: ["Swiftblade","Gemini","Gauntlet"], advantage: [], disadvantage: ["Doctor Repulsor"] },
-      "Witch Slayer": {
-        synergy: ["Amun-Ra","Magmus","Pandamonium"],
-        advantage: ["Armadon","Amun-Ra"],
-        disadvantage: ["Swiftblade","Predator","Jeraziah","Moraxus","Pebbles","Gunblade"]
-      },
-
-      // Pre-existing sample data
-      "Slither": {
-        synergy: ["Demented Shaman","Amun-Ra","Swiftblade","Vindicator","Arachna"],
-        advantage: ["Armadon"],
-        disadvantage: ["The Chipper","Arachna","Predator","Swiftblade","Jeraziah","Accursed","Pebbles"]
-      },
-      "Pandamonium": {
-        synergy: ["Witch Slayer","Voodoo Jester","Monarch"],
-        advantage: ["Predator"],
-        disadvantage: ["Vindicator","Bubbles","Fayde"]
-      },
-      "Bubbles": {
-        synergy: ["Magmus","Behemoth","Plague Rider"],
-        advantage: ["Pandamonium","Voodoo Jester","Monarch","Hammerstorm","Rampage","Myrmidon","Flint Beastwood","Andromeda","Pyromancer"],
-        disadvantage: ["Blood Hunter","Gunblade","Predator","Night Hound"]
-      },
-      "Empath": { synergy: ["Predator","Nomad"], advantage: [], disadvantage: [] },
-      "Rampage": { synergy: [], advantage: ["Predator"], disadvantage: [] },
-      "Pharaoh": { synergy: [], advantage: ["Devourer","Pandamonium","Rampage"], disadvantage: [] },
-      "Magebane": { synergy: [], advantage: ["Amun-Ra"], disadvantage: [] },
-      "Corrupted Disciple": { synergy: [], advantage: ["Predator"], disadvantage: [] },
-      "Glacius": { synergy: ["Devourer","Swiftblade"], advantage: [], disadvantage: [] },
-      "Electrician": { synergy: ["Swiftblade"], advantage: [], disadvantage: [] },
-      "King Klout": { synergy: [], advantage: ["Devourer","Pandamonium"], disadvantage: [] },
-      "Swiftblade": { synergy: [], advantage: ["Predator"], disadvantage: [] },
-      "Moraxus": { synergy: [], advantage: ["Pollywog Priest"], disadvantage: [] },
-      "Vindicator": { synergy: [], advantage: ["Tempest"], disadvantage: [] },
-      "The Chipper": { synergy: [], advantage: ["Thunderbringer","Pyromancer"], disadvantage: [] },
-      "Bombardier": { synergy: [], advantage: [], disadvantage: ["Arachna","The Chipper","Accursed","Jeraziah"] },
-      "Flux": { synergy: ["Behemoth","Tempest","Soulstealer","Geomancer","Kraken","Solstice","Legionnaire","Hellbringer"], advantage: [], disadvantage: [] },
-      "Hammerstorm": { synergy: ["Rhapsody","Glacius","Monarch"], advantage: [], disadvantage: [] },
-
-      /* Pedido del usuario: Ophelia weak vs */
-      "Ophelia": { synergy: [], advantage: [], disadvantage: ["Glacius","Voodoo Jester","Behemoth"] }
+function deriveMatchups(base) {
+  const allHeroes = new Set(HEROES);
+  const out = {};
+  for (const h of allHeroes) {
+    const e = base[h] || {};
+    out[h] = {
+      synergy: Array.from(new Set(e.synergy || [])),
+      advantage: Array.from(new Set(e.advantage || [])),
+      disadvantage: Array.from(new Set(e.disadvantage || []))
     };
+  }
+  for (const a of Object.keys(out)) {
+    for (const b of out[a].synergy) if (allHeroes.has(b) && !out[b].synergy.includes(a)) out[b].synergy.push(a);
+    for (const b of out[a].advantage) if (allHeroes.has(b) && !out[b].disadvantage.includes(a)) out[b].disadvantage.push(a);
+    for (const b of out[a].disadvantage) if (allHeroes.has(b) && !out[b].advantage.includes(a)) out[b].advantage.push(a);
+  }
+  for (const h of Object.keys(out)) {
+    const clean = (arr)=>Array.from(new Set(arr.filter(x=>x && x!==h))).sort();
+    out[h].synergy = clean(out[h].synergy);
+    out[h].advantage = clean(out[h].advantage);
+    out[h].disadvantage = clean(out[h].disadvantage);
+  }
+  return out;
+}
 
-    /* ================= IMAGES ================= */
-    const HERO_IMAGES = {
-      "Witch Slayer": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/50/Witch_Slayer.jpg/revision/latest?cb=20130307042554",
-      "Armadon": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/51/Armadon.jpg/revision/latest?cb=20130306185857",
-      "Amun-Ra": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/6f/Amun-Ra.jpg/revision/latest?cb=20130307041228",
-      "Scout": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/46/Scout.jpg/revision/latest?cb=20130307041840",
-      "Magebane": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b3/Magebane.jpg/revision/latest?cb=20130306163313",
-      "Moon Queen": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/10/Moon_Queen.jpg/revision/latest?cb=20130307035643",
-      "Andromeda": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/ab/Andromeda.jpg/revision/latest?cb=20130306185817",
-      "Night Hound": "https://static.wikia.nocookie.net/hon_gamepedia/images/2/2c/Night_Hound.jpg/revision/latest?cb=20130307035751",
-      "Swiftblade": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/e9/Swiftblade.jpg/revision/latest?cb=20130306171444",
-      "Sir Benzington": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b9/Sir_Benzington.jpg/revision/latest?cb=20130505152701",
-      "Silhouette": "https://static.wikia.nocookie.net/hon_gamepedia/images/8/87/Silhouette_Shadow.jpg/revision/latest?cb=20130331200853",
-      "Nomad": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/ec/Nomad.jpg/revision/latest?cb=20130307035805",
-      "Monkey King": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a4/Monkey_King.jpg/revision/latest?cb=20130307035630",
-      "Valkyrie": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/5f/Valkyrie.jpg/revision/latest?cb=20130307042441",
-      "Zephyr": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/35/Zephyr.jpg/revision/latest?cb=20130307042624",
-      "Pyromancer": "https://static.wikia.nocookie.net/hon_gamepedia/images/2/29/Pyromancer.jpg/revision/latest?cb=20130307041213",
-      "Rhapsody": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/4a/Rhapsody.jpg/revision/latest?cb=20130307041347",
-      "Bubbles": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/63/Bubbles.jpg/revision/latest?cb=20130307033206",
-      "The Chipper": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/66/The_Chipper.jpg/revision/latest?cb=20130307042153",
-      "Empath": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d7/Empath.jpg/revision/latest?cb=20130307034409",
-      "Nymphora": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d2/Nymphora.jpg/revision/latest?cb=20130307035825",
-      "Thunderbringer": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/12/Thunderbringer.jpg/revision/latest?cb=20130307042333",
-      "Martyr": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a9/Martyr.jpg/revision/latest?cb=20130307035420",
-      "Monarch": "https://static.wikia.nocookie.net/hon_gamepedia/images/2/26/Monarch.jpg/revision/latest?cb=20130529075138",
-      "Ophelia": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d6/Ophelia.jpg/revision/latest?cb=20130307035908",
-      "Pollywog Priest": "https://static.wikia.nocookie.net/hon_gamepedia/images/0/01/Pollywog_Priest.jpg/revision/latest?cb=20130307041117",
-      "Tempest": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/46/Tempest.jpg/revision/latest?cb=20130307042142",
-      "Vindicator": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/49/Vindicator.jpg/revision/latest?cb=20151021024509",
-      "Ellonia": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/fb/Ellonia.jpg/revision/latest?cb=20130307034312",
-      "Bombardier": "https://static.wikia.nocookie.net/hon_gamepedia/images/9/9c/Bombardier.jpg/revision/latest?cb=20130307033131",
-      "Blacksmith": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/eb/Blacksmith.jpg/revision/latest?cb=20130307032631",
-      "Aluna": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c1/Aluna.jpg/revision/latest?cb=20130306185759",
-      "Tundra": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/e3/Tundra.jpg/revision/latest?cb=20130307042428",
-      "Keeper of the Forest": "https://static.wikia.nocookie.net/hon_gamepedia/images/7/77/Keeper_of_the_Forest.jpg/revision/latest?cb=20150507070751",
-      "Solstice": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/ea/Solstice.jpg/revision/latest?cb=20130307042115",
-      "Pebbles": "https://static.wikia.nocookie.net/hon_gamepedia/images/0/04/Pebbles.jpg/revision/latest?cb=20130307041017",
-      "Rampage": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/f4/Rampage.jpg/revision/latest?cb=20130307041303",
-      "Jeraziah": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c6/Jeraziah.jpg/revision/latest?cb=20130307034928",
-      "The Gladiator": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/cb/The_Gladiator.jpg/revision/latest?cb=20130307042300",
-      "Flux": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b1/Flux.jpg/revision/latest?cb=20130307034520",
-      "Drunken Master": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b3/Drunken_Master.jpg/revision/latest?cb=20130307034242",
-      "Behemoth": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/55/Behemoth.jpg/revision/latest?cb=20130306190303",
-      "Predator": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/4e/Predator.jpg/revision/latest?cb=20130307041128",
-      "Pandamonium": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/67/Pandamonium.jpg/revision/latest?cb=20130307035924",
-      "Midas": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/41/Midas.jpg/revision/latest?cb=20130307035556",
-      "Legionnaire": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c0/Legionnaire.jpg/revision/latest?cb=20130307035053",
-      "Hammerstorm": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a6/Hammerstorm.jpg/revision/latest?cb=20130307034850",
-      "War Beast": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d7/War_Beast.jpg/revision/latest?cb=20130307042525",
-      "Pestilence": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/39/Pestilence.jpg/revision/latest?cb=20130307041031",
-      "Pharaoh": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a1/Pharaoh.jpg/revision/latest?cb=20130307041047",
-      "Moraxus": "https://static.wikia.nocookie.net/hon_gamepedia/images/2/2f/Moraxus.jpg/revision/latest?cb=20130307035709",
-      "Lodestone": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c4/Lodestone.jpg/revision/latest?cb=20130307035157",
-      "Devourer": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/67/Devourer.jpg/revision/latest?cb=20130307034125",
-      "Electrician": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/19/Electrician.jpg/revision/latest?cb=20130307034256",
-      "Gauntlet": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/f9/Gauntlet.jpg/revision/latest?cb=20130307034557",
-      "King Klout": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/12/King_Klout.jpg/revision/latest?cb=20151215201244",
-      "Kraken": "https://static.wikia.nocookie.net/hon_gamepedia/images/0/0a/Kraken.jpg/revision/latest?cb=20130307035035",
-      "Accursed": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/4a/Accursed.jpg/revision/latest?cb=20130306185735",
-      "Maliken": "https://static.wikia.nocookie.net/hon_gamepedia/images/2/29/Maliken.jpg/revision/latest?cb=20130307035402",
-      "Magmus": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/45/Magmus.jpg/revision/latest?cb=20130307035347",
-      "Torturer": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a9/Torturer.jpg/revision/latest?cb=20130307042351",
-      "Voodoo Jester": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/59/Voodoo_Jester.jpg/revision/latest?cb=20130307042513",
-      "Riftwalker": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/ae/Riftwalker.jpg/revision/latest?cb=20130307041421",
-      "Puppet Master": "https://static.wikia.nocookie.net/hon_gamepedia/images/7/7c/Puppet_Master.jpg/revision/latest?cb=20130307041200",
-      "Prophet": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/6a/Prophet.jpg/revision/latest?cb=20130307041144",
-      "Soul Reaper": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/40/Soul_Reaper.jpg/revision/latest?cb=20130307042128",
-      "Wretched Hag": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/e5/Wretched_Hag.jpg/revision/latest?cb=20130307042607",
-      "Fayde": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b8/Fayde.jpg/revision/latest?cb=20130307034449",
-      "Geomancer": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/c3/Geomancer_Old.jpg/revision/latest?cb=20180312123120",
-      "Hellbringer": "https://static.wikia.nocookie.net/hon_gamepedia/images/0/01/Hellbringer.jpg/revision/latest?cb=20130307034904",
-      "Plague Rider": "https://static.wikia.nocookie.net/hon_gamepedia/images/d/d5/Plague_Rider.jpg/revision/latest?cb=20130307041100",
-      "Myrmidon": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/40/Myrmidon.jpg/revision/latest?cb=20130307035729",
-      "Glacius": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/b8/Glacius.jpg/revision/latest?cb=20130307034650",
-      "Doctor Repulsor": "https://static.wikia.nocookie.net/hon_gamepedia/images/c/ce/Doctor_Repulsor.jpg/revision/latest?cb=20130729010055",
-      "Defiler": "https://static.wikia.nocookie.net/hon_gamepedia/images/1/1c/Defiler.jpg/revision/latest?cb=20130307034036",
-      "Soulstealer": "https://static.wikia.nocookie.net/hon_gamepedia/images/a/a6/Soulstealer.jpg/revision/latest?cb=20130308050019",
-      "The Madman": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/ed/The_Madman.jpg/revision/latest?cb=20130307042317",
-      "Sand Wraith": "https://static.wikia.nocookie.net/hon_gamepedia/images/5/55/Sand_Wraith.jpg/revision/latest?cb=20170815133734",
-      "Gemini": "https://static.wikia.nocookie.net/hon_gamepedia/images/e/e8/Gemini.jpg/revision/latest?cb=20130307034613",
-      "Flint Beastwood": "https://static.wikia.nocookie.net/hon_gamepedia/images/6/6e/Flint_Beastwood.jpg/revision/latest?cb=20130307034504",
-      "Chronos": "https://static.wikia.nocookie.net/hon_gamepedia/images/b/ba/Chronos.jpg/revision/latest?cb=20180112204658",
-      "Blood Hunter": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/37/Blood_Hunter.jpg/revision/latest?cb=20130307033115",
-      "Arachna": "https://static.wikia.nocookie.net/hon_gamepedia/images/4/4d/Arachna.jpg/revision/latest?cb=20130306185841",
-      "Forsaken Archer": "https://static.wikia.nocookie.net/hon_gamepedia/images/f/fc/Forsaken_Archer.jpg/revision/latest?cb=20151021024504",
-      "Grinex": "https://static.wikia.nocookie.net/hon_gamepedia/images/3/31/Grinex.jpg/revision/latest?cb=20130307034755"
-    };
+const MATCHUPS = deriveMatchups(MATCHUPS_BASE);
 
-    const IMAGE_BASE = "./assets/hon";
-    const IMAGE_EXTS = ["webp","png","jpg"];
+function Avatar({ name, size = 24 }) {
+  const [i, setI] = useState(0);
+  const localURL = (filename) => new URL(`${IMAGE_BASE}/${filename}`, window.location.href).href;
+  const fileStem = name.replace(/\s+/g, "_");
+  const candidates = [
+    localURL(`${fileStem}.webp`),
+    localURL(`${fileStem}.png`),
+    localURL(`${fileStem}.jpg`),
+    HERO_IMAGES[name] || null,
+  ].filter(Boolean);
 
-    /* ================= LOGIC ================= */
-    function deriveMatchups(base) {
-      const allHeroes = new Set(HEROES);
-      const out = {};
-      for (const h of allHeroes) {
-        const e = base[h] || {};
-        out[h] = {
-          synergy: Array.from(new Set(e.synergy || [])),
-          advantage: Array.from(new Set(e.advantage || [])),
-          disadvantage: Array.from(new Set(e.disadvantage || []))
-        };
-      }
-      // Mirrors
-      for (const a of Object.keys(out)) {
-        for (const b of out[a].synergy) if (allHeroes.has(b) && !out[b].synergy.includes(a)) out[b].synergy.push(a);
-        for (const b of out[a].advantage) if (allHeroes.has(b) && !out[b].disadvantage.includes(a)) out[b].disadvantage.push(a);
-        for (const b of out[a].disadvantage) if (allHeroes.has(b) && !out[b].advantage.includes(a)) out[b].advantage.push(a);
-      }
-      for (const h of Object.keys(out)) {
-        const clean = (arr)=>Array.from(new Set(arr.filter(x=>x && x!==h))).sort();
-        out[h].synergy = clean(out[h].synergy);
-        out[h].advantage = clean(out[h].advantage);
-        out[h].disadvantage = clean(out[h].disadvantage);
-      }
-      return out;
-    }
+  const src = i < candidates.length ? candidates[i] : null;
+  const dim = `${size}px`;
+  const initials = name.split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase();
 
-    const MATCHUPS = deriveMatchups(MATCHUPS_BASE);
+  return (
+    <div style={{ width: dim, height: dim }} className="inline-flex items-center justify-center rounded-lg bg-slate-700 text-slate-100 overflow-hidden">
+      {src ? (
+        <img src={src} alt={name} decoding="async" onError={() => setI(idx => idx + 1)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      ) : (
+        <span style={{ fontSize: size > 32 ? 14 : 12 }} className="font-semibold">{initials}</span>
+      )}
+    </div>
+  );
+}
 
-    /* ================= UI COMPONENTS ================= */
-    // ⬇️ Avatar que intenta LOCAL primero (absoluto dentro del sitio), luego externo
-    function Avatar({ name, size = 24 }) {
-      const [i, setI] = useState(0);
+export default function App(){
+  const [query,setQuery]=useState("");
+  const [open,setOpen]=useState(false);
+  const [highlight,setHighlight]=useState(0);
+  const [selected,setSelected]=useState(null);
+  const containerRef=useRef(null);
+  const panelRef=useRef(null);
+  const [panelMinHeight, setPanelMinHeight] = useState(320);
+  useLayoutEffect(()=>{ if(panelRef.current){ const h = panelRef.current.offsetHeight; setPanelMinHeight(prev=> Math.max(prev, h)); } }, [selected]);
 
-      // Construye URL ABSOLUTA dentro de TU sitio (sirve bien para GitHub Pages)
-      const localURL = (filename) => new URL(`${IMAGE_BASE}/${filename}`, window.location.href).href;
+  const filtered=useMemo(()=>{
+    const q=query.trim().toLowerCase();
+    const list=!q?HEROES:HEROES.filter(h=>h.toLowerCase().includes(q));
+    return [...list].sort();
+  },[query]);
 
-      const fileStem = name.replace(/\s+/g, "_"); // "Night Hound" -> "Night_Hound"
-      const candidates = [
-        localURL(`${fileStem}.webp`),
-        localURL(`${fileStem}.png`),
-        localURL(`${fileStem}.jpg`),
-        HERO_IMAGES[name] || null, // externa al final
-      ].filter(Boolean);
+  useEffect(()=>{
+    function onClickOutside(e){ if(containerRef.current && !containerRef.current.contains(e.target)) setOpen(false); }
+    window.addEventListener("mousedown",onClickOutside);
+    return()=>window.removeEventListener("mousedown",onClickOutside);
+  },[]);
 
-      const src = i < candidates.length ? candidates[i] : null;
-      const dim = `${size}px`;
-      const initials = name.split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase();
+  function choose(hero){ setSelected(hero); setQuery(hero); setOpen(false); try{window.scrollTo({top:0,behavior:'smooth'})}catch{} }
+  const data=selected?MATCHUPS[selected]:null;
 
-      return (
-        <div
-          style={{ width: dim, height: dim }}
-          className="inline-flex items-center justify-center rounded-lg bg-slate-700 text-slate-100 overflow-hidden"
-        >
-          {src ? (
-            <img
-              src={src}
-              alt={name}
-              decoding="async"
-              onError={() => setI(idx => idx + 1)}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            <span style={{ fontSize: size > 32 ? 14 : 12 }} className="font-semibold">
-              {initials}
-            </span>
+  function ResultItem({hero}){
+    return (
+      <button type="button" onClick={()=>choose(hero)} className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 focus:bg-slate-700 focus:outline-none transition" aria-label={`Open ${hero} matchups`}>
+        <Avatar name={hero} />
+        <span className="underline decoration-transparent group-hover:decoration-slate-300">{hero}</span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-3xl">
+        <header className="mb-6 text-center">
+          <img
+            src="./assets/logo_reborn.png"
+            alt="HoN Matchups Logo"
+            className="mx-auto mb-3 h-12 sm:h-14 md:h-16 w-auto drop-shadow-[0_4px_10px_rgba(0,0,0,0.45)]"
+            decoding="async"
+          />
+          <h1 className="text-3xl font-bold">HoN Matchups</h1>
+          <p className="text-slate-400">Hero synergy and matchup finder</p>
+        </header>
+
+        <div className="relative" ref={containerRef}>
+          <div className="relative flex justify-center">
+            <input type="text" placeholder="Search hero…" value={query} onChange={(e)=>{setQuery(e.target.value); setOpen(true);}} onFocus={()=>{ setQuery(""); setOpen(true); }} className="w-96 max-w-full rounded-2xl border border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-400 pl-4 pr-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
+          </div>
+          {open && (
+            <ul className="absolute z-10 mt-2 max-h-72 w-96 max-w-full left-1/2 -translate-x-1/2 overflow-auto rounded-2xl border border-slate-700 bg-slate-800 p-1 shadow-xl">
+              {filtered.map((hero,idx)=>(
+                <li key={hero} onClick={()=>choose(hero)} onMouseEnter={()=>setHighlight(idx)} className={`cursor-pointer rounded-xl px-3 py-2 text-sm flex items-center gap-2 ${idx===highlight?"bg-slate-700":""}`}>
+                  <Avatar name={hero} />
+                  <span>{hero}</span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
-      );
-    }
 
-    /* ================= UI: App ================= */
-    function App(){
-      const [query,setQuery]=useState("");
-      const [open,setOpen]=useState(false);
-      const [highlight,setHighlight]=useState(0);
-      const [selected,setSelected]=useState(null);
-      const containerRef=useRef(null);
-      const panelRef=useRef(null);
-      const [panelMinHeight, setPanelMinHeight] = useState(320);
-      useLayoutEffect(()=>{ if(panelRef.current){ const h = panelRef.current.offsetHeight; setPanelMinHeight(prev=> Math.max(prev, h)); } }, [selected]);
-
-      const filtered=useMemo(()=>{
-        const q=query.trim().toLowerCase();
-        const list=!q?HEROES:HEROES.filter(h=>h.toLowerCase().includes(q));
-        return [...list].sort();
-      },[query]);
-
-      useEffect(()=>{
-        function onClickOutside(e){ if(containerRef.current && !containerRef.current.contains(e.target)) setOpen(false); }
-        window.addEventListener("mousedown",onClickOutside);
-        return()=>window.removeEventListener("mousedown",onClickOutside);
-      },[]);
-
-      function choose(hero){ setSelected(hero); setQuery(hero); setOpen(false); try{window.scrollTo({top:0,behavior:'smooth'})}catch{} }
-      const data=selected?MATCHUPS[selected]:null;
-
-      function ResultItem({hero}){
-        return (
-          <button type="button" onClick={()=>choose(hero)} className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 focus:bg-slate-700 focus:outline-none transition" aria-label={`Open ${hero} matchups`}>
-            <Avatar name={hero} />
-            <span className="underline decoration-transparent group-hover:decoration-slate-300">{hero}</span>
-          </button>
-        );
-      }
-
-      return (
-        <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6">
-          <div className="w-full max-w-3xl">
-            <header className="mb-6 text-center">
-              <h1 className="text-3xl font-bold">HoN Matchups</h1>
-              <p className="text-slate-400">Hero synergy and matchup finder</p>
-            </header>
-
-            <div className="relative" ref={containerRef}>
-              <div className="relative flex justify-center">
-                <input type="text" placeholder="Search hero…" value={query} onChange={(e)=>{setQuery(e.target.value); setOpen(true);}} onFocus={()=>{ setQuery(""); setOpen(true); }} className="w-96 max-w-full rounded-2xl border border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-400 pl-4 pr-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
-              </div>
-              {open && (
-                <ul className="absolute z-10 mt-2 max-h-72 w-96 max-w-full left-1/2 -translate-x-1/2 overflow-auto rounded-2xl border border-slate-700 bg-slate-800 p-1 shadow-xl">
-                  {filtered.map((hero,idx)=>(
-                    <li key={hero} onClick={()=>choose(hero)} onMouseEnter={()=>setHighlight(idx)} className={`cursor-pointer rounded-xl px-3 py-2 text-sm flex items-center gap-2 ${idx===highlight?"bg-slate-700":""}`}>
-                      <Avatar name={hero} />
-                      <span>{hero}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+        {selected && data && (
+          <div ref={panelRef} style={{minHeight: panelMinHeight}} className="mt-8 rounded-2xl border border-slate-700 bg-slate-800 p-4 shadow-sm">
+            <div className="flex items-center gap-4 mb-4">
+              <Avatar name={selected} size={72} />
+              <h2 className="text-2xl font-semibold">{selected}</h2>
             </div>
-
-            {selected && data && (
-              <div ref={panelRef} style={{minHeight: panelMinHeight}} className="mt-8 rounded-2xl border border-slate-700 bg-slate-800 p-4 shadow-sm">
-                <div className="flex items-center gap-4 mb-4">
-                  <Avatar name={selected} size={72} />
-                  <h2 className="text-2xl font-semibold">{selected}</h2>
-                </div>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div>
-                    <h3 className="font-semibold text-sky-300">Best Partners</h3>
-                    <ul className="mt-2 flex flex-col gap-2">
-                      {data.synergy.length ? data.synergy.map(h => (<li key={h}><ResultItem hero={h} /></li>)) : <li className="text-sm text-slate-400">No data</li>}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-green-400">Strong Against</h3>
-                    <ul className="mt-2 flex flex-col gap-2">
-                      {data.advantage.length ? data.advantage.map(h => (<li key={h}><ResultItem hero={h} /></li>)) : <li className="text-sm text-slate-400">No data</li>}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-red-400">Weak Against</h3>
-                    <ul className="mt-2 flex flex-col gap-2">
-                      {data.disadvantage.length ? data.disadvantage.map(h => (<li key={h}><ResultItem hero={h} /></li>)) : <li className="text-sm text-slate-400">No data</li>}
-                    </ul>
-                  </div>
-                </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <h3 className="font-semibold text-sky-300">Best Partners</h3>
+                <ul className="mt-2 flex flex-col gap-2">
+                  {data.synergy.length ? data.synergy.map(h => (<li key={h}><ResultItem hero={h} /></li>)) : <li className="text-sm text-slate-400">No data</li>}
+                </ul>
               </div>
-            )}
-
-            <footer className="mt-10 text-center text-xs text-slate-400">
-              <p>Developed by Nicket</p>
-              <p>v27s — Stable</p>
-            </footer>
+              <div>
+                <h3 className="font-semibold text-green-400">Strong Against</h3>
+                <ul className="mt-2 flex flex-col gap-2">
+                  {data.advantage.length ? data.advantage.map(h => (<li key={h}><ResultItem hero={h} /></li>)) : <li className="text-sm text-slate-400">No data</li>}
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-red-400">Weak Against</h3>
+                <ul className="mt-2 flex flex-col gap-2">
+                  {data.disadvantage.length ? data.disadvantage.map(h => (<li key={h}><ResultItem hero={h} /></li>)) : <li className="text-sm text-slate-400">No data</li>}
+                </ul>
+              </div>
+            </div>
           </div>
-        </div>
-      );
-    }
+        )}
 
-    // ====== Tests ======
-    (function runTests(){
-      const t=(name,cond)=>{ if(!cond) throw new Error(name); console.log("✅",name); };
-      try {
-        // Existing tests (unchanged)
-        t("Search contains many heroes", HEROES.length > 70);
-        t("Image map contains Grinex", !!HERO_IMAGES["Grinex"] === false ? true : true);
-
-        // Additional sanity tests
-        const M = MATCHUPS;
-        t("Blacksmith partners include Swiftblade", M["Blacksmith"].synergy.includes("Swiftblade"));
-        t("Blood Hunter strong vs Wretched Hag", M["Blood Hunter"].advantage.includes("Wretched Hag"));
-        t("Arachna strong vs Thunderbringer", M["Arachna"].advantage.includes("Thunderbringer"));
-        t("Pestilence strong vs The Madman & Grinex", M["Pestilence"].advantage.includes("The Madman") && M["Pestilence"].advantage.includes("Grinex"));
-        t("Hellbringer partners include Magmus", M["Hellbringer"].synergy.includes("Magmus"));
-        t("Magmus partners include Witch Slayer", M["Magmus"].synergy.includes("Witch Slayer"));
-        t("Voodoo Jester weak vs Doctor Repulsor", M["Voodoo Jester"].disadvantage.includes("Doctor Repulsor"));
-
-        // Mirror expectations
-        t("Mirror check: Thunderbringer weak vs Arachna", M["Thunderbringer"].disadvantage.includes("Arachna"));
-        t("Mirror check: The Madman weak vs Pestilence", M["The Madman"].disadvantage.includes("Pestilence"));
-
-        console.log("All tests passed ✅");
-      } catch(e){ console.error("❌ Test failed:", e.message); }
-    })();
-
-    // Render
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App />);
-  </script>
-</body>
-</html>
+        <footer className="mt-10 text-center text-xs text-slate-400">
+          <p>Developed by Nicket</p>
+          <p>v27s — Stable</p>
+        </footer>
+      </div>
+    </div>
+  );
+}
