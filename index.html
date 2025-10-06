@@ -20,7 +20,7 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo, useRef, useLayoutEffect } = React;
 
-    /* =============== HERO DATA =============== */
+    /* ================= HERO LIST ================= */
     const HEROES = [
       "Accursed","Amun-Ra","Andromeda","Arachna","Armadon","Behemoth","Blacksmith","Blood Hunter",
       "Bombardier","Bubbles","Chronos","Corrupted Disciple","Defiler","Demented Shaman","Devourer",
@@ -36,7 +36,7 @@
       "Witch Slayer","Wretched Hag","Zephyr"
     ].sort();
 
-    /* =============== MATCHUPS (BASE) =============== */
+    /* ================= MATCHUPS ================= */
     const MATCHUPS_BASE = {
       "Blacksmith": { synergy: ["Swiftblade", "Moon Queen", "Forsaken Archer"], advantage: [], disadvantage: [] },
       "Blood Hunter": { synergy: [], advantage: ["Thunderbringer", "Wretched Hag"], disadvantage: [] },
@@ -83,7 +83,7 @@
       "Ophelia": { synergy: [], advantage: [], disadvantage: ["Glacius","Voodoo Jester","Behemoth"] }
     };
 
-    /* =============== LÓGICA ================= */
+    /* ================= DERIVE ================= */
     function deriveMatchups(base) {
       const all = new Set(HEROES);
       const out = {};
@@ -111,7 +111,7 @@
 
     const MATCHUPS = deriveMatchups(MATCHUPS_BASE);
 
-    /* =============== AVATAR ================= */
+    /* ================= AVATAR ================= */
     function Avatar({ name, size = 24 }) {
       const [i, setI] = useState(0);
       const file = name.replace(/\s+/g, "_");
@@ -134,7 +134,7 @@
       );
     }
 
-    /* =============== APP ================= */
+    /* ================= APP ================= */
     function App(){
       const [query,setQuery]=useState("");
       const [open,setOpen]=useState(false);
@@ -152,13 +152,7 @@
         return [...list].sort();
       },[query]);
 
-      useEffect(()=>{
-        const outside=e=>{ if(containerRef.current && !containerRef.current.contains(e.target)) setOpen(false); };
-        window.addEventListener("mousedown",outside);
-        return()=>window.removeEventListener("mousedown",outside);
-      },[]);
-
-      const choose=h=>{ setSelected(h); setQuery(h); setOpen(false); try{window.scrollTo({top:0,behavior:"smooth"})}catch{} };
+      const choose=h=>{ setSelected(h); setQuery(h); setOpen(false); window.scrollTo({top:0,behavior:"smooth"}); };
       const data=selected?MATCHUPS[selected]:null;
 
       const ResultItem=({hero})=>(
@@ -172,8 +166,8 @@
         <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6">
           <div className="w-full max-w-3xl">
             <header className="mb-6 text-center">
-              <img src="./assets/hon/logo_reborn.png" alt="HoN Reborn Logo" className="mx-auto mb-3 h-16 w-auto" decoding="async" />
-              <h1 className="text-3xl font-bold">HoN Matchups</h1>
+              <img src="./assets/hon/logo_reborn.png" alt="HoN Reborn Logo" className="mx-auto mb-6 h-48 w-auto" decoding="async" />
+              <h1 className="text-4xl font-bold">HoN Matchups</h1>
               <p className="text-slate-400">Hero synergy and matchup finder</p>
             </header>
 
