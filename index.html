@@ -224,10 +224,10 @@
                 className="w-96 max-w-full rounded-2xl border border-slate-700 bg-slate-800 text-slate-100 pl-4 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400 mx-auto block"
               />
               {open&&(
-                <ul className="absolute z-10 mt-2 max-h-72 w-96 left-1/2 -translate-x-1/2 overflow-auto rounded-2xl border border-slate-700 bg-slate-800 p-1 shadow-xl">
+                <ul className="absolute z-10 mt-2 max-h-72 w-96 left-1/2 -translate-x-1/2 overflow-auto rounded-2xl border border-slate-700 bg-slate-800 p-1 shadow-xl space-y-0.5">
                   {filtered.map((hero)=>(
                     <li key={hero}>
-                      <button type="button" {...gestureHandlers(hero)} className="w-full text-left flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-slate-700">
+                      <button type="button" {...gestureHandlers(hero)} className="w-full text-left flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm hover:bg-slate-700">
                         <Avatar name={hero}/><span>{hero}</span>
                       </button>
                     </li>
