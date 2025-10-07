@@ -141,9 +141,13 @@
       const [highlight,setHighlight]=useState(0);
       const [selected,setSelected]=useState(null);
       const containerRef=useRef(null);
-      const inputRef=useRef(null);     // 👈 NUEVO: referencia al input
+      const inputRef=useRef(null);
       const panelRef=useRef(null);
       const [panelMinHeight,setPanelMinHeight]=useState(320);
+
+      // Estado de gesto para distinguir scroll vs tap en táctil
+      const touchRef = useRef({ active:false, id:null, x:0, y:0, moved:false });
+      const TAP_SLOP = 6; // px de umbral
 
       useLayoutEffect(()=>{ if(panelRef.current){ setPanelMinHeight(Math.max(panelMinHeight,panelRef.current.offsetHeight)); }},[selected]);
 
@@ -153,7 +157,6 @@
         return [...list].sort();
       },[query]);
 
-      // pointerdown listener compatible con móviles
       useEffect(() => {
         function onOutside(e) {
           if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
@@ -162,26 +165,52 @@
         return () => window.removeEventListener("pointerdown", onOutside);
       }, []);
 
-      // 👇 Al elegir, cerramos, seteamos query y forzamos blur del input para que NO quede enfocado
       const choose = (h) => {
         setSelected(h);
         setQuery(h);
         setOpen(false);
-        // Blur en el siguiente tick para asegurar que se ejecute tras el pointerdown
-        setTimeout(() => {
-          if (inputRef.current) inputRef.current.blur();
-        }, 0);
+        setTimeout(() => inputRef.current?.blur(), 0);
         try { window.scrollTo({top:0, behavior:"smooth"}); } catch {}
       };
 
-      const data=selected?MATCHUPS[selected]:null;
+      // Handlers de gesto (scroll vs tap) para cada ítem
+      const gestureHandlers = (hero) => ({
+        onPointerDown: (e) => {
+          if (e.pointerType === "touch") {
+            touchRef.current = { active:true, id:e.pointerId, x:e.clientX, y:e.clientY, moved:false };
+          }
+        },
+        onPointerMove: (e) => {
+          const t = touchRef.current;
+          if (t.active && e.pointerId === t.id) {
+            if (Math.abs(e.clientX - t.x) > TAP_SLOP || Math.abs(e.clientY - t.y) > TAP_SLOP) {
+              t.moved = true; // ya es scroll
+            }
+          }
+        },
+        onPointerUp: (e) => {
+          const t = touchRef.current;
+          if (e.pointerType === "touch") {
+            if (t.active && !t.moved) {
+              e.preventDefault();
+              choose(hero); // tap válido
+            }
+            t.active = false;
+          } else {
+            // mouse / pen: seleccionar normal
+            choose(hero);
+          }
+        },
+        onPointerCancel: () => { touchRef.current.active = false; },
+      });
 
-      const ResultItem=({hero})=>(
+      const ResultItem=({hero, idx})=>(
         <button
           type="button"
-          onPointerDown={(e)=>{ e.preventDefault(); choose(hero); }}
-          onMouseEnter={()=>setHighlight(hero)}
-          className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 transition"
+          {...gestureHandlers(hero)}
+          onMouseEnter={()=>setHighlight(idx)}
+          className={`w-full text-left flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${idx===highlight?"bg-slate-700":"hover:bg-slate-700"}`}
+          aria-label={`Open ${hero} matchups`}
         >
           <Avatar name={hero} />
           <span className="underline decoration-transparent group-hover:decoration-slate-300">{hero}</span>
@@ -200,7 +229,7 @@
             <div className="relative" ref={containerRef}>
               <div className="relative flex justify-center">
                 <input
-                  ref={inputRef}  /* 👈 NUEVO: referenciado para poder hacer blur() */
+                  ref={inputRef}
                   type="text"
                   placeholder="Search hero…"
                   value={query}
@@ -212,23 +241,15 @@
               {open && (
                 <ul className="absolute z-10 mt-2 max-h-72 w-96 left-1/2 -translate-x-1/2 overflow-auto rounded-2xl border border-slate-700 bg-slate-800 p-1 shadow-xl">
                   {filtered.map((hero,idx)=>(
-                    <li key={hero}>
-                      <button
-                        type="button"
-                        onPointerDown={(e)=>{ e.preventDefault(); choose(hero); }}
-                        onMouseEnter={()=>setHighlight(idx)}
-                        className={`w-full text-left flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${idx===highlight?"bg-slate-700":""}`}
-                      >
-                        <Avatar name={hero} />
-                        <span>{hero}</span>
-                      </button>
+                    <li key={hero} className="px-1 py-1">
+                      <ResultItem hero={hero} idx={idx} />
                     </li>
                   ))}
                 </ul>
               )}
             </div>
 
-            {selected && data && (
+            {selected && (
               <div ref={panelRef} style={{minHeight:panelMinHeight}} className="mt-8 rounded-2xl border border-slate-700 bg-slate-800 p-4">
                 <div className="flex items-center gap-4 mb-4">
                   <Avatar name={selected} size={72} />
@@ -238,19 +259,19 @@
                   <div>
                     <h3 className="font-semibold text-sky-300">Best Partners</h3>
                     <ul className="mt-2 flex flex-col gap-2">
-                      {data.synergy.length ? data.synergy.map(h => (<li key={h}><ResultItem hero={h} /></li>)) : <li className="text-sm text-slate-400">No data</li>}
+                      {MATCHUPS[selected]?.synergy?.length ? MATCHUPS[selected].synergy.map(h => (<li key={h}><button type="button" {...gestureHandlers(h)} className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 transition"><Avatar name={h} /><span className="underline decoration-transparent group-hover:decoration-slate-300">{h}</span></button></li>)) : <li className="text-sm text-slate-400">No data</li>}
                     </ul>
                   </div>
                   <div>
                     <h3 className="font-semibold text-green-400">Strong Against</h3>
                     <ul className="mt-2 flex flex-col gap-2">
-                      {data.advantage.length ? data.advantage.map(h => (<li key={h}><ResultItem hero={h} /></li>)) : <li className="text-sm text-slate-400">No data</li>}
+                      {MATCHUPS[selected]?.advantage?.length ? MATCHUPS[selected].advantage.map(h => (<li key={h}><button type="button" {...gestureHandlers(h)} className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 transition"><Avatar name={h} /><span className="underline decoration-transparent group-hover:decoration-slate-300">{h}</span></button></li>)) : <li className="text-sm text-slate-400">No data</li>}
                     </ul>
                   </div>
                   <div>
                     <h3 className="font-semibold text-red-400">Weak Against</h3>
                     <ul className="mt-2 flex flex-col gap-2">
-                      {data.disadvantage.length ? data.disadvantage.map(h => (<li key={h}><ResultItem hero={h} /></li>)) : <li className="text-sm text-slate-400">No data</li>}
+                      {MATCHUPS[selected]?.disadvantage?.length ? MATCHUPS[selected].disadvantage.map(h => (<li key={h}><button type="button" {...gestureHandlers(h)} className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 transition"><Avatar name={h} /><span className="underline decoration-transparent group-hover:decoration-slate-300">{h}</span></button></li>)) : <li className="text-sm text-slate-400">No data</li>}
                     </ul>
                   </div>
                 </div>
