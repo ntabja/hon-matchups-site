@@ -12,6 +12,10 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    .scroll-anchor { scroll-margin-top: 16px; }
+  </style>
 </head>
 
 <body class="bg-slate-900 text-slate-100">
@@ -38,6 +42,12 @@
 
     /* ================= MATCHUPS ================= */
     const MATCHUPS_BASE = {
+      "Accursed": {
+        synergy: ["Soul Reaper", "Legionnaire", "Martyr"],
+        advantage: ["Moon Queen"],
+        disadvantage: ["Night Hound", "Vindicator"]
+      },
+
       "Blacksmith": { synergy: ["Swiftblade", "Moon Queen", "Forsaken Archer"], advantage: [], disadvantage: [] },
       "Blood Hunter": { synergy: [], advantage: ["Thunderbringer", "Wretched Hag"], disadvantage: [] },
       "Arachna": { synergy: ["Slither"], advantage: ["Pyromancer", "Thunderbringer", "Flint Beastwood", "Soulstealer"], disadvantage: ["Magebane"] },
@@ -138,142 +148,115 @@
     function App(){
       const [query,setQuery]=useState("");
       const [open,setOpen]=useState(false);
-      const [highlight,setHighlight]=useState(0);
       const [selected,setSelected]=useState(null);
-      const containerRef=useRef(null);
       const inputRef=useRef(null);
+      const containerRef=useRef(null);
       const panelRef=useRef(null);
       const [panelMinHeight,setPanelMinHeight]=useState(320);
+      const touchRef=useRef({active:false,id:null,x:0,y:0,moved:false});
+      const TAP_SLOP=6;
 
-      // Estado de gesto para distinguir scroll vs tap en táctil
-      const touchRef = useRef({ active:false, id:null, x:0, y:0, moved:false });
-      const TAP_SLOP = 6; // px de umbral
-
-      useLayoutEffect(()=>{ if(panelRef.current){ setPanelMinHeight(Math.max(panelMinHeight,panelRef.current.offsetHeight)); }},[selected]);
+      useLayoutEffect(()=>{ if(panelRef.current){ setPanelMinHeight(h=>Math.max(h,panelRef.current.offsetHeight)); }},[selected]);
 
       const filtered=useMemo(()=>{
         const q=query.trim().toLowerCase();
-        const list=!q?HEROES:HEROES.filter(h=>h.toLowerCase().includes(q));
-        return [...list].sort();
+        return !q?HEROES:HEROES.filter(h=>h.toLowerCase().includes(q));
       },[query]);
 
-      useEffect(() => {
-        function onOutside(e) {
-          if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
-        }
-        window.addEventListener("pointerdown", onOutside);
-        return () => window.removeEventListener("pointerdown", onOutside);
-      }, []);
+      useEffect(()=>{
+        function onOutside(e){ if(containerRef.current && !containerRef.current.contains(e.target)) setOpen(false); }
+        window.addEventListener("pointerdown",onOutside);
+        return()=>window.removeEventListener("pointerdown",onOutside);
+      },[]);
 
-      const choose = (h) => {
+      const isTouchDevice = React.useMemo(()=> {
+        if (typeof window === "undefined") return false;
+        return window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      },[]);
+
+      const choose=(h)=>{
         setSelected(h);
         setQuery(h);
         setOpen(false);
-        setTimeout(() => inputRef.current?.blur(), 0);
-        try { window.scrollTo({top:0, behavior:"smooth"}); } catch {}
+        setTimeout(()=>inputRef.current?.blur(),0);
+
+        if (isTouchDevice) return; // No scroll programático en móvil
+
+        if (panelRef.current) {
+          const rect = panelRef.current.getBoundingClientRect();
+          const inView = rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+          if (!inView) panelRef.current.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+        }
       };
 
-      // Handlers de gesto (scroll vs tap) para cada ítem
-      const gestureHandlers = (hero) => ({
-        onPointerDown: (e) => {
-          if (e.pointerType === "touch") {
-            touchRef.current = { active:true, id:e.pointerId, x:e.clientX, y:e.clientY, moved:false };
-          }
+      const gestureHandlers=(hero)=>({
+        onPointerDown:(e)=>{ if(e.pointerType==="touch"){ touchRef.current={active:true,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false}; } },
+        onPointerMove:(e)=>{ const t=touchRef.current; if(t.active&&e.pointerId===t.id){ if(Math.abs(e.clientX-t.x)>TAP_SLOP||Math.abs(e.clientY-t.y)>TAP_SLOP) t.moved=true; } },
+        onPointerUp:(e)=>{ const t=touchRef.current;
+          if(e.pointerType==="touch"){ if(t.active&&!t.moved){ e.preventDefault(); choose(hero); } t.active=false; }
+          else { choose(hero); }
         },
-        onPointerMove: (e) => {
-          const t = touchRef.current;
-          if (t.active && e.pointerId === t.id) {
-            if (Math.abs(e.clientX - t.x) > TAP_SLOP || Math.abs(e.clientY - t.y) > TAP_SLOP) {
-              t.moved = true; // ya es scroll
-            }
-          }
-        },
-        onPointerUp: (e) => {
-          const t = touchRef.current;
-          if (e.pointerType === "touch") {
-            if (t.active && !t.moved) {
-              e.preventDefault();
-              choose(hero); // tap válido
-            }
-            t.active = false;
-          } else {
-            // mouse / pen: seleccionar normal
-            choose(hero);
-          }
-        },
-        onPointerCancel: () => { touchRef.current.active = false; },
+        onPointerCancel:()=>{ touchRef.current.active=false; }
       });
-
-      const ResultItem=({hero, idx})=>(
-        <button
-          type="button"
-          {...gestureHandlers(hero)}
-          onMouseEnter={()=>setHighlight(idx)}
-          className={`w-full text-left flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${idx===highlight?"bg-slate-700":"hover:bg-slate-700"}`}
-          aria-label={`Open ${hero} matchups`}
-        >
-          <Avatar name={hero} />
-          <span className="underline decoration-transparent group-hover:decoration-slate-300">{hero}</span>
-        </button>
-      );
 
       return (
         <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6">
           <div className="w-full max-w-3xl">
             <header className="mb-6 text-center">
-              <img src="./assets/hon/logo_reborn.png" alt="HoN Reborn Logo" className="mx-auto mb-6 h-56 w-auto" decoding="async" />
+              {/* LOGO clickeable */}
+              <a href="https://heroesofnewerth.com" target="_blank" rel="noopener noreferrer" className="inline-block">
+                <img src="./assets/hon/logo_reborn.png" alt="HoN Reborn Logo" className="mx-auto mb-6 h-56 w-auto" decoding="async" />
+              </a>
               <h1 className="text-4xl font-bold">HoN Matchups</h1>
               <p className="text-slate-400">Hero synergy and matchup finder</p>
             </header>
 
             <div className="relative" ref={containerRef}>
-              <div className="relative flex justify-center">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Search hero…"
-                  value={query}
-                  onChange={(e)=>{setQuery(e.target.value); setOpen(true);}}
-                  onFocus={()=>{ setQuery(""); setOpen(true); }}
-                  className="w-96 max-w-full rounded-2xl border border-slate-700 bg-slate-800 text-slate-100 pl-4 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
-                />
-              </div>
-              {open && (
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Search hero..."
+                value={query}
+                onChange={(e)=>{setQuery(e.target.value); setOpen(true);}}
+                onFocus={()=>{ setQuery(""); setOpen(true); }}
+                className="w-96 max-w-full rounded-2xl border border-slate-700 bg-slate-800 text-slate-100 pl-4 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400 mx-auto block"
+              />
+              {open&&(
                 <ul className="absolute z-10 mt-2 max-h-72 w-96 left-1/2 -translate-x-1/2 overflow-auto rounded-2xl border border-slate-700 bg-slate-800 p-1 shadow-xl">
-                  {filtered.map((hero,idx)=>(
-                    <li key={hero} className="px-1 py-1">
-                      <ResultItem hero={hero} idx={idx} />
+                  {filtered.map((hero)=>(
+                    <li key={hero}>
+                      <button type="button" {...gestureHandlers(hero)} className="w-full text-left flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-slate-700">
+                        <Avatar name={hero}/><span>{hero}</span>
+                      </button>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
 
-            {selected && (
-              <div ref={panelRef} style={{minHeight:panelMinHeight}} className="mt-8 rounded-2xl border border-slate-700 bg-slate-800 p-4">
+            {selected&&(
+              <div ref={panelRef} className="scroll-anchor mt-8 rounded-2xl border border-slate-700 bg-slate-800 p-4" style={{minHeight:panelMinHeight}}>
                 <div className="flex items-center gap-4 mb-4">
-                  <Avatar name={selected} size={72} />
+                  <Avatar name={selected} size={72}/>
                   <h2 className="text-2xl font-semibold">{selected}</h2>
                 </div>
                 <div className="grid gap-4 md:grid-cols-3">
-                  <div>
-                    <h3 className="font-semibold text-sky-300">Best Partners</h3>
-                    <ul className="mt-2 flex flex-col gap-2">
-                      {MATCHUPS[selected]?.synergy?.length ? MATCHUPS[selected].synergy.map(h => (<li key={h}><button type="button" {...gestureHandlers(h)} className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 transition"><Avatar name={h} /><span className="underline decoration-transparent group-hover:decoration-slate-300">{h}</span></button></li>)) : <li className="text-sm text-slate-400">No data</li>}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-green-400">Strong Against</h3>
-                    <ul className="mt-2 flex flex-col gap-2">
-                      {MATCHUPS[selected]?.advantage?.length ? MATCHUPS[selected].advantage.map(h => (<li key={h}><button type="button" {...gestureHandlers(h)} className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 transition"><Avatar name={h} /><span className="underline decoration-transparent group-hover:decoration-slate-300">{h}</span></button></li>)) : <li className="text-sm text-slate-400">No data</li>}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-red-400">Weak Against</h3>
-                    <ul className="mt-2 flex flex-col gap-2">
-                      {MATCHUPS[selected]?.disadvantage?.length ? MATCHUPS[selected].disadvantage.map(h => (<li key={h}><button type="button" {...gestureHandlers(h)} className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 transition"><Avatar name={h} /><span className="underline decoration-transparent group-hover:decoration-slate-300">{h}</span></button></li>)) : <li className="text-sm text-slate-400">No data</li>}
-                    </ul>
-                  </div>
+                  {["synergy","advantage","disadvantage"].map((type)=>(
+                    <div key={type}>
+                      <h3 className={`font-semibold ${type==="synergy"?"text-sky-300":type==="advantage"?"text-green-400":"text-red-400"}`}>
+                        {type==="synergy"?"Best Partners":type==="advantage"?"Strong Against":"Weak Against"}
+                      </h3>
+                      <ul className="mt-2 flex flex-col gap-2">
+                        {MATCHUPS[selected]?.[type]?.length?MATCHUPS[selected][type].map(h=>(
+                          <li key={h}>
+                            <button type="button" {...gestureHandlers(h)} className="group w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-700 transition">
+                              <Avatar name={h}/><span>{h}</span>
+                            </button>
+                          </li>
+                        )):<li className="text-sm text-slate-400">No data</li>}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
