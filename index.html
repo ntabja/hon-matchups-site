@@ -12,6 +12,11 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Si en algún caso se usa scrollIntoView al panel, deja margen con el header/logo */
+    .scroll-anchor { scroll-margin-top: 16px; }
+  </style>
 </head>
 
 <body class="bg-slate-900 text-slate-100">
@@ -153,22 +158,55 @@
       const touchRef=useRef({active:false,id:null,x:0,y:0,moved:false});
       const TAP_SLOP=6;
 
-      useLayoutEffect(()=>{ if(panelRef.current){ setPanelMinHeight(Math.max(panelMinHeight,panelRef.current.offsetHeight)); }},[selected]);
+      useLayoutEffect(()=>{ if(panelRef.current){ setPanelMinHeight(h=>Math.max(h,panelRef.current.offsetHeight)); }},[selected]);
 
       const filtered=useMemo(()=>{
         const q=query.trim().toLowerCase();
         return !q?HEROES:HEROES.filter(h=>h.toLowerCase().includes(q));
       },[query]);
 
-      useEffect(()=>{function onOutside(e){if(containerRef.current&&!containerRef.current.contains(e.target))setOpen(false);}window.addEventListener("pointerdown",onOutside);return()=>window.removeEventListener("pointerdown",onOutside);},[]);
+      useEffect(()=>{
+        function onOutside(e){ if(containerRef.current && !containerRef.current.contains(e.target)) setOpen(false); }
+        window.addEventListener("pointerdown",onOutside);
+        return()=>window.removeEventListener("pointerdown",onOutside);
+      },[]);
 
-      const choose=(h)=>{setSelected(h);setQuery(h);setOpen(false);setTimeout(()=>inputRef.current?.blur(),0);try{window.scrollTo({top:0,behavior:"smooth"});}catch{}};
+      // Detecta dispositivo táctil
+      const isTouchDevice = React.useMemo(()=> {
+        if (typeof window === "undefined") return false;
+        return window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      },[]);
+
+      const choose=(h)=>{
+        setSelected(h);
+        setQuery(h);
+        setOpen(false);
+
+        // Cierra el teclado
+        setTimeout(()=>inputRef.current?.blur(),0);
+
+        // *** FIX: NO hacer scroll en móvil (evita que reaparezca la barra del navegador) ***
+        if (isTouchDevice) return;
+
+        // En desktop: solo si el panel no es visible, ajusta la vista
+        if (panelRef.current) {
+          const rect = panelRef.current.getBoundingClientRect();
+          const inView = rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+          if (!inView) {
+            // Usa nearest para no pegarse al tope (evita saltos grandes)
+            panelRef.current.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+          }
+        }
+      };
 
       const gestureHandlers=(hero)=>({
-        onPointerDown:(e)=>{if(e.pointerType==="touch"){touchRef.current={active:true,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};}},
-        onPointerMove:(e)=>{const t=touchRef.current;if(t.active&&e.pointerId===t.id){if(Math.abs(e.clientX-t.x)>TAP_SLOP||Math.abs(e.clientY-t.y)>TAP_SLOP)t.moved=true;}},
-        onPointerUp:(e)=>{const t=touchRef.current;if(e.pointerType==="touch"){if(t.active&&!t.moved){e.preventDefault();choose(hero);}t.active=false;}else{choose(hero);}},
-        onPointerCancel:()=>{touchRef.current.active=false;}
+        onPointerDown:(e)=>{ if(e.pointerType==="touch"){ touchRef.current={active:true,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false}; } },
+        onPointerMove:(e)=>{ const t=touchRef.current; if(t.active&&e.pointerId===t.id){ if(Math.abs(e.clientX-t.x)>TAP_SLOP||Math.abs(e.clientY-t.y)>TAP_SLOP) t.moved=true; } },
+        onPointerUp:(e)=>{ const t=touchRef.current;
+          if(e.pointerType==="touch"){ if(t.active&&!t.moved){ e.preventDefault(); choose(hero); } t.active=false; }
+          else { choose(hero); }
+        },
+        onPointerCancel:()=>{ touchRef.current.active=false; }
       });
 
       return (
@@ -186,13 +224,13 @@
                 type="text"
                 placeholder="Search hero..."
                 value={query}
-                onChange={(e)=>{setQuery(e.target.value);setOpen(true);}}
-                onFocus={()=>{setQuery("");setOpen(true);}}
+                onChange={(e)=>{setQuery(e.target.value); setOpen(true);}}
+                onFocus={()=>{ setQuery(""); setOpen(true); }}
                 className="w-96 max-w-full rounded-2xl border border-slate-700 bg-slate-800 text-slate-100 pl-4 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400 mx-auto block"
               />
               {open&&(
                 <ul className="absolute z-10 mt-2 max-h-72 w-96 left-1/2 -translate-x-1/2 overflow-auto rounded-2xl border border-slate-700 bg-slate-800 p-1 shadow-xl">
-                  {filtered.map((hero,idx)=>(
+                  {filtered.map((hero)=>(
                     <li key={hero}>
                       <button type="button" {...gestureHandlers(hero)} className="w-full text-left flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-slate-700">
                         <Avatar name={hero}/><span>{hero}</span>
@@ -204,7 +242,7 @@
             </div>
 
             {selected&&(
-              <div ref={panelRef} style={{minHeight:panelMinHeight}} className="mt-8 rounded-2xl border border-slate-700 bg-slate-800 p-4">
+              <div ref={panelRef} className="scroll-anchor mt-8 rounded-2xl border border-slate-700 bg-slate-800 p-4" style={{minHeight:panelMinHeight}}>
                 <div className="flex items-center gap-4 mb-4">
                   <Avatar name={selected} size={72}/>
                   <h2 className="text-2xl font-semibold">{selected}</h2>
@@ -212,9 +250,7 @@
                 <div className="grid gap-4 md:grid-cols-3">
                   {["synergy","advantage","disadvantage"].map((type)=>(
                     <div key={type}>
-                      <h3 className={`font-semibold ${
-                        type==="synergy"?"text-sky-300":type==="advantage"?"text-green-400":"text-red-400"
-                      }`}>
+                      <h3 className={`font-semibold ${type==="synergy"?"text-sky-300":type==="advantage"?"text-green-400":"text-red-400"}`}>
                         {type==="synergy"?"Best Partners":type==="advantage"?"Strong Against":"Weak Against"}
                       </h3>
                       <ul className="mt-2 flex flex-col gap-2">
