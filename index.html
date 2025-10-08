@@ -42,7 +42,6 @@
     }
     footer{opacity:.7;padding:24px 12px;text-align:center;font-size:12px;position:relative}
     .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;border:1px solid rgba(255,255,255,.2);padding:2px 6px;border-radius:6px;background:#0e1628}
-    .tag{display:inline-block;padding:.25rem .6rem;border:1px solid rgba(255,255,255,.18);border-radius:999px;margin:0.25rem;font-size:13px;color:var(--muted);}
     .char{ color:#4cc9f0; } .verb{ color:var(--verb); } .adj{ color:var(--adj); } .place{ color:#ffe066; } .event{ color:#b266ff; } .scene{ color:#ffb347; }
 
     #footerBtns{position:absolute;right:12px;bottom:8px;opacity:0;transition:opacity .3s;display:flex;gap:6px;}
@@ -51,7 +50,7 @@
     .btn span { font-weight: bold; }
     .letter-p{color:#4cc9f0}.letter-v{color:#ff4d4d}.letter-a{color:#7CFC00}.letter-l{color:#ffe066}
 
-    /* Overlay inicial — AHORA visible por defecto */
+    /* Overlay inicial — visible por defecto; se oculta al entrar a sala */
     #lobbyOverlay{
       position:fixed; inset:0; background:rgba(11,16,32,.92);backdrop-filter: blur(8px);
       display:flex; align-items:center; justify-content:center; z-index:1000;
@@ -108,9 +107,7 @@
     .scoreBtn[disabled]{opacity:.35; cursor:not-allowed}
 
     /* Enunciado por grupo (línea con badge de color) */
-    .lineGroup{
-      display:flex; align-items:center; gap:10px; margin:6px 0;
-    }
+    .lineGroup{ display:flex; align-items:center; gap:10px; margin:6px 0; }
     .lineGroup .gBadge{
       padding:2px 8px; border:1px solid rgba(255,255,255,.18); border-radius:8px; background:#0e1628; font-weight:800; font-size:12px; white-space:nowrap;
     }
@@ -132,7 +129,7 @@
     </div>
   </header>
 
-  <!-- Overlay de inicio (visible por defecto; se oculta al entrar a una sala) -->
+  <!-- Overlay de inicio -->
   <div id="lobbyOverlay">
     <section class="card" style="max-width:520px; width:92%; padding:20px">
       <div class="title" style="margin-bottom:10px">Crear o unirse a una sala</div>
@@ -176,7 +173,6 @@
     <section class="card" style="margin-top:14px">
       <div class="title">Enunciado a dibujar</div>
       <div id="salida" class="out" style="margin-top:10px;white-space:pre-wrap"></div>
-      <div id="historial" style="margin-top:10px"></div>
       <div id="testlog" class="muted" style="margin-top:10px"></div>
     </section>
 
@@ -218,7 +214,6 @@
     function rng(seed){if(!seed)return Math.random;let n=0;for(let i=0;i<seed.length;i++)n=(n*31+seed.charCodeAt(i))>>>0;return mulberry32(n)}
     const pick=(arr,R)=>arr[Math.floor(R()*arr.length)];
     const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    window.esc = esc;
 
     const wrapChar=name=>`<span class="char">${esc(name)}</span>`;
     const wrapVerb=v=>`<span class="verb">${esc(v)}</span>`;
@@ -239,7 +234,7 @@
     function genEvento(R){const e=pick(EVENTOS,R),p=pick(PERSONAJES,R);return{ text:`${e} ${p}`, html:`${wrapEvent(e)} ${wrapChar(p)}` }}
     function genEscena(R){const s=pick(ESCENAS,R),l=pick(LUGARES,R);return{ text:`${s} ${l}`, html:`${wrapScene(s)} ${wrapPlace(l)}` }}
 
-    const recent=[]; let lastCopyText='';
+    let lastCopyText='';
 
     function generarUno(mode){
       const R=rng();
@@ -263,17 +258,8 @@
       const gens={PVAL:genPVAL,PV:genPV,PA:genPA,PL:genPL,PAL:genPAL,PVA:genPVA,PVL:genPVL,FUSION:genFusion,P:genP,EVENTO:genEvento,ESCENA:genEscena};
       const fn=gens[mode]||genPVAL;
       const out=Array.from({length:n},()=>fn(R));
-      byId('salida').innerHTML=out.map(o=>o.html).join('<br>');
-      const texts=out.map(o=>o.text);
-      lastCopyText=texts.join('\n');
-      recent.push(...texts); renderHistorial();
-    }
-
-    function renderHistorial(){
-      const last=recent.slice(-10).reverse();
-      byId('historial').innerHTML=last.length ?
-        ( `<div class="muted">Últimos (${last.length}):</div>` + last.map(x=>`<span class="tag">${esc(x)}</span>`).join('') )
-        : '';
+      document.getElementById('salida').innerHTML=out.map(o=>o.html).join('<br>');
+      lastCopyText=out.map(o=>o.text).join('\n');
     }
 
     // Toast + sonidos
@@ -301,15 +287,25 @@
     }
     (function(){ document.querySelectorAll('button').forEach(b=> b.addEventListener('click', playClick, {capture:true})); })();
 
-    byId('btnCopiar').onclick=async()=>{ if(!lastCopyText) return; await navigator.clipboard.writeText(lastCopyText); }
-    byId('btnTest').onclick=()=>{
+    document.getElementById('btnCopiar').onclick=async()=>{
+      if(!lastCopyText) return;
+      await navigator.clipboard.writeText(lastCopyText);
+    };
+
+    document.getElementById('btnTest').onclick=()=>{
       const modes=['PVAL','PV','PA','PL','PAL','PVA','PVL','FUSION','P','EVENTO','ESCENA'];
-      let report='Pruebas:'; for(const m of modes){
-        let ok=0,total=100; for(let i=0;i<total;i++){ const {text,html}=generarUno(m); if(typeof text==='string'&&text.length>0&&typeof html==='string'&&html.length>0) ok++; }
+      let report='Pruebas:';
+      for(const m of modes){
+        let ok=0,total=100;
+        for(let i=0;i<total;i++){
+          const {text,html}=generarUno(m);
+          if(typeof text==='string'&&text.length>0&&typeof html==='string'&&html.length>0) ok++;
+        }
         report+=`\n• ${m}: ${ok}/${total} generados correctamente`;
       }
-      byId('testlog').textContent=report;
+      document.getElementById('testlog').textContent=report;
     };
+
     document.addEventListener('keydown',e=>{
       if((e.metaKey||e.ctrlKey)){
         if(e.key==='1'){e.preventDefault();generarN('PVAL',1);} 
@@ -398,7 +394,7 @@
       localStorage.removeItem(LS_CODE_KEY);
       badgeEl.style.display='none'; badgeEl.textContent = 'Sala: -----';
       leaveRow.style.display='none';
-      overlayEl.style.display='flex';           /* ← siempre vuelve a mostrarse */
+      overlayEl.style.display='flex';
       playersCard.style.display='none';
       lastLobbyState = null;
     }
@@ -471,7 +467,7 @@
       if(items.length === 0){
         playersList.innerHTML = `<span class="muted">Nadie conectado aún…</span>`;
       }else{
-        const escSafe = window.esc || ((s)=>String(s));
+        const escSafe = (s)=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         playersList.innerHTML = items.map(x=>{
           const col = groupColor(x.group);
           const bg = rgba(col, 0.22);
@@ -706,10 +702,10 @@
       }else{
         const grouped = buildGroupedOutput(mode);
         if (grouped){
-          byId("salida").innerHTML = grouped.html;
+          document.getElementById("salida").innerHTML = grouped.html;
         }else{
           const { html } = genOne(mode);
-          byId("salida").innerHTML = html;
+          document.getElementById("salida").innerHTML = html;
         }
       }
     }
@@ -744,7 +740,7 @@
         watchLobby(saved);
         setupPresence(saved);
       }else{
-        overlayEl.style.display = 'flex';   // ← muestra el menú de inicio
+        overlayEl.style.display = 'flex';
         playersCard.style.display='none';
       }
     })();
@@ -785,7 +781,6 @@
         console.warn('Error al salir de la sala:', e);
       }
 
-      // limpiar UI y volver a overlay
       lobbyCode = null;
       lastLobbyState = null;
       badgeEl.style.display='none'; badgeEl.textContent = 'Sala: -----';
